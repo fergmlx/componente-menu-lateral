@@ -238,6 +238,8 @@ public class SideMenuItemPanel extends JPanel {
     public void setOpcionesFont(Font opcionesFont) {
         this.opcionesFont = opcionesFont;
         textLabel.setFont(opcionesFont);
+        revalidate();
+        repaint();
     }
     
     // Método para notificar clicks (puedes expandir esto con listeners)

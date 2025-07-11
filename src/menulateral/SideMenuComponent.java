@@ -24,7 +24,9 @@ public class SideMenuComponent extends JPanel implements Serializable {
     private int collapsedWidth = 60;
     private int expandedWidth = 250;
     private Color backgroundColor = new Color(45, 45, 45);
-    private Color iconColor = Color.WHITE;
+    private Color defaultHamburgerIconColor = Color.WHITE;
+    private Color hoverColor = Color.WHITE;
+    private Color textColor = Color.WHITE;
     private String logoText = "";
     private Font opcionesFont = new Font("Poppins SemiBold", Font.PLAIN, 14);
     private ChangeListener modelChangeListener;
@@ -42,7 +44,6 @@ public class SideMenuComponent extends JPanel implements Serializable {
     private JLabel logoLabel;
     private JButton toggleButton;
     private JPanel contentPanel;
-    private JScrollPane scrollPane;
     
     // Iconos como strings para las barras (fallback)
     private final String HAMBURGER_ICON = "☰";
@@ -63,8 +64,7 @@ public class SideMenuComponent extends JPanel implements Serializable {
         setLayout(new BorderLayout());
         setOpaque(false); // Clave para transparencia
         setPreferredSize(new Dimension(collapsedWidth, 400));
-        //setBorder(new EmptyBorder(0, 0, 0, 0));
-        setBorder(null);
+        setBorder(new EmptyBorder(0, 0, 0, 0));
         
         // Panel superior (header) - usa el mismo backgroundColor
         headerPanel = new JPanel(new BorderLayout());
@@ -85,7 +85,7 @@ public class SideMenuComponent extends JPanel implements Serializable {
         toggleButton = new JButton();
         updateToggleButtonIcon();
         toggleButton.setBackground(Color.WHITE);
-        toggleButton.setForeground(iconColor);
+        toggleButton.setForeground(defaultHamburgerIconColor);
         toggleButton.setBorder(null);
         toggleButton.setFocusPainted(false);
         toggleButton.setContentAreaFilled(false);
@@ -96,14 +96,6 @@ public class SideMenuComponent extends JPanel implements Serializable {
         contentPanel = new JPanel();
         contentPanel.setOpaque(false); // Clave para transparencia
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        
-        // Scroll pane para el contenido
-        scrollPane = new JScrollPane(contentPanel);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.setBorder(null);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         
         SideMenuItem item = new SideMenuItem("Inicio", new ImageIcon(getClass().getResource("home.png")));
         item.setTooltip("Ir a Inicio");
@@ -130,7 +122,7 @@ public class SideMenuComponent extends JPanel implements Serializable {
         
         // Agregar componentes principales
         add(headerPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+        add(contentPanel, BorderLayout.CENTER);
         
         updateLayout();
     }
@@ -160,6 +152,8 @@ public class SideMenuComponent extends JPanel implements Serializable {
         for (SideMenuItem item : model.getItems()) {
             SideMenuItemPanel itemPanel = new SideMenuItemPanel(item, collapsedWidth);
             itemPanel.setOpcionesFont(opcionesFont);
+            itemPanel.setHoverColor(hoverColor);
+            itemPanel.setTextColor(textColor);
             contentPanel.add(itemPanel);
             contentPanel.add(Box.createVerticalStrut(2)); // Pequeño espaciado
         }
@@ -236,10 +230,7 @@ public class SideMenuComponent extends JPanel implements Serializable {
      */
     private void createDefaultIcons() {
         // Crear icono hamburger
-        hamburgerIcon = createHamburgerIcon(24, iconColor);
-        
-        // Crear icono close
-        closeIcon = createHamburgerIcon(24, iconColor);
+        closeIcon = hamburgerIcon = createHamburgerIcon(24, defaultHamburgerIconColor);
     }
     
     /**
@@ -247,13 +238,6 @@ public class SideMenuComponent extends JPanel implements Serializable {
      */
     private ImageIcon createHamburgerIcon(int size, Color color) {
         return new ImageIcon(createIconImage(size, color, "hamburger"));
-    }
-    
-    /**
-     * Crea un icono de close (X)
-     */
-    private ImageIcon createCloseIcon(int size, Color color) {
-        return new ImageIcon(createIconImage(size, color, "close"));
     }
     
     /**
@@ -280,11 +264,6 @@ public class SideMenuComponent extends JPanel implements Serializable {
             g2d.drawLine(startX, line2Y, startX + lineWidth, line2Y);
             g2d.drawLine(startX, line3Y, startX + lineWidth, line3Y);
             
-        } else if ("close".equals(type)) {
-            // Dibujar X
-            int margin = 4;
-            g2d.drawLine(margin, margin, size - margin, size - margin);
-            g2d.drawLine(size - margin, margin, margin, size - margin);
         }
         
         g2d.dispose();
@@ -329,7 +308,6 @@ public class SideMenuComponent extends JPanel implements Serializable {
                 height = 50;
             }
 
-            // Escalar el icono sin verificar el tipo
             Icon scaledIcon = scaleIconToSize(logoIcon, width, height);
             logoLabel.setIcon(scaledIcon);
             logoLabel.setBorder(new EmptyBorder(0, 25, 0, 0));
@@ -340,13 +318,13 @@ public class SideMenuComponent extends JPanel implements Serializable {
         }
     }
     
-    private Icon scaleIcon(Icon icon, int width, int height) {
-        // Convertir Icon a ImageIcon si es necesario
+    private Icon scaleIconToSize(Icon icon, int width, int height) {
+        // Convertir Icon a ImageIcon para obtener la Image
         ImageIcon imageIcon;
         if (icon instanceof ImageIcon) {
             imageIcon = (ImageIcon) icon;
         } else {
-            // Si no es ImageIcon, crear uno desde el Icon
+            // Si no es ImageIcon, convertirlo a BufferedImage primero
             BufferedImage bufferedImage = new BufferedImage(
                 icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2d = bufferedImage.createGraphics();
@@ -355,23 +333,9 @@ public class SideMenuComponent extends JPanel implements Serializable {
             imageIcon = new ImageIcon(bufferedImage);
         }
 
-        Image image = imageIcon.getImage();
-
-        // Calcular el escalado manteniendo proporciones
-        int originalWidth = image.getWidth(null);
-        int originalHeight = image.getHeight(null);
-
-        double scaleX = (double) width / originalWidth;
-        double scaleY = (double) height / originalHeight;
-        double scale = Math.min(scaleX, scaleY); // Mantener proporciones
-
-        int newWidth = (int) (originalWidth * scale);
-        int newHeight = (int) (originalHeight * scale);
-
-        // Redimensionar la imagen
-        Image scaledImage = image.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-
-        return new ImageIcon(scaledImage);
+        // Tu método exacto
+        Image img = imageIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+        return new ImageIcon(img);
     }
     
     @Override
@@ -399,18 +363,7 @@ public class SideMenuComponent extends JPanel implements Serializable {
         return model;
     }
     
-    private void setupModelListener() {
-        // Crear el listener una sola vez
-        modelChangeListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                updateMenuItems();
-            }
-        };
-
-        model.addChangeListener(modelChangeListener);
-    }
-
+    // Sobrescribir setModel para actualizar el editor
     public void setModel(SideMenuModel model) {
         if (this.model != null && modelChangeListener != null) {
             // Remover listener del modelo anterior
@@ -430,24 +383,65 @@ public class SideMenuComponent extends JPanel implements Serializable {
         }
         this.model.addChangeListener(modelChangeListener);
 
-        // Actualizar la vista
-        updateMenuItems();
+        // Actualizar la vista inmediatamente
+        SwingUtilities.invokeLater(() -> {
+            updateMenuItems();
+            revalidate();
+            repaint();
+        });
     }
     
-    /**
-     * Métodos de conveniencia para trabajar con ítems del menú
-     */
-    /*public void addMenuItem(String text) {
-        model.addItem(text);
+    private void setupModelListener() {
+        // Crear el listener una sola vez
+        modelChangeListener = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                updateMenuItems();
+            }
+        };
+
+        model.addChangeListener(modelChangeListener);
     }
     
+    public void addMenuItem(String text) {
+        model.addItem(new SideMenuItem(text));
+    }
+
     public void addMenuItem(String text, ImageIcon icon) {
-        model.addItem(text, icon);
+        model.addItem(new SideMenuItem(text, icon));
     }
-    
+
+    public void addMenuItem(String text, String iconPath) {
+        try {
+            ImageIcon icon = new ImageIcon(iconPath);
+            model.addItem(new SideMenuItem(text, icon));
+        } catch (Exception e) {
+            System.err.println("Error cargando icono desde: " + iconPath);
+            // Agregar sin icono si falla
+            model.addItem(new SideMenuItem(text));
+        }
+    }
+
+    public void addMenuItemWithResourceIcon(String text, String resourcePath) {
+        try {
+            // Para cargar iconos desde recursos del classpath
+            java.net.URL iconURL = getClass().getResource(resourcePath);
+            if (iconURL != null) {
+                ImageIcon icon = new ImageIcon(iconURL);
+                model.addItem(new SideMenuItem(text, icon));
+            } else {
+                System.err.println("Recurso no encontrado: " + resourcePath);
+                model.addItem(new SideMenuItem(text));
+            }
+        } catch (Exception e) {
+            System.err.println("Error cargando icono desde recurso: " + resourcePath);
+            model.addItem(new SideMenuItem(text));
+        }
+    }
+
     public void addMenuItem(SideMenuItem item) {
         model.addItem(item);
-    }*/
+    }
     
     public void removeMenuItem(int index) {
         model.removeItem(index);
@@ -513,25 +507,37 @@ public class SideMenuComponent extends JPanel implements Serializable {
         repaint();
     }
     
-    public Color getIconColor() {
-        return iconColor;
+    public Color getDefaultHamburgerIconColor() {
+        return defaultHamburgerIconColor;
     }
     
-    public void setIconColor(Color iconColor) {
-        this.iconColor = iconColor;
+    public void setDefaultHamburgerIconColor(Color iconColor) {
+        this.defaultHamburgerIconColor = iconColor;
         toggleButton.setForeground(iconColor);
         // Recrear iconos por defecto con el nuevo color
         createDefaultIcons();
         updateToggleButtonIcon();
     }
     
-    public String getLogoText() {
-        return logoText;
+    public Color getHoverColor() {
+        return hoverColor;
     }
     
-    public void setLogoText(String logoText) {
-        this.logoText = logoText;
-        updateLogo();
+    public void setHoverColor(Color hoverColor) {
+        this.hoverColor = hoverColor;
+    }
+    
+    public Color getTextColor() {
+        return textColor;
+    }
+    
+    public void setTextColor(Color textColor) {
+        this.textColor = textColor;
+        SwingUtilities.invokeLater(() -> {
+            updateMenuItems();
+            revalidate();
+            repaint();
+        });
     }
     
     public Font getOpcionesFont() {
@@ -540,6 +546,11 @@ public class SideMenuComponent extends JPanel implements Serializable {
     
     public void setOpcionesFont(Font opcionesFont) {
         this.opcionesFont = opcionesFont;
+        SwingUtilities.invokeLater(() -> {
+            updateMenuItems();
+            revalidate();
+            repaint();
+        });
     }
     
     // Getters y setters para los iconos
@@ -572,138 +583,5 @@ public class SideMenuComponent extends JPanel implements Serializable {
     public void setLogoIcon(Icon logoIcon) {
         this.logoIcon = logoIcon;
         updateLogo();
-    }
-    
-    private Icon scaleIconToSize(Icon icon, int width, int height) {
-        // Convertir Icon a ImageIcon para obtener la Image
-        ImageIcon imageIcon;
-        if (icon instanceof ImageIcon) {
-            imageIcon = (ImageIcon) icon;
-        } else {
-            // Si no es ImageIcon, convertirlo a BufferedImage primero
-            BufferedImage bufferedImage = new BufferedImage(
-                icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2d = bufferedImage.createGraphics();
-            icon.paintIcon(null, g2d, 0, 0);
-            g2d.dispose();
-            imageIcon = new ImageIcon(bufferedImage);
-        }
-
-        // Tu método exacto
-        Image img = imageIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
-        return new ImageIcon(img);
-    }
-    
-    /**
-     * Método de utilidad para cargar iconos desde archivos
-     */
-    public void setHamburgerIconFromFile(String filePath) {
-        try {
-            hamburgerIcon = new ImageIcon(filePath);
-            if (!expanded) {
-                updateToggleButtonIcon();
-            }
-        } catch (Exception e) {
-            System.err.println("Error cargando icono hamburger: " + e.getMessage());
-        }
-    }
-    
-    public void setCloseIconFromFile(String filePath) {
-        try {
-            closeIcon = new ImageIcon(filePath);
-            if (expanded) {
-                updateToggleButtonIcon();
-            }
-        } catch (Exception e) {
-            System.err.println("Error cargando icono close: " + e.getMessage());
-        }
-    }
-    
-    public void setLogoIconFromFile(String filePath) {
-        try {
-            logoIcon = new ImageIcon(filePath);
-            updateLogo();
-        } catch (Exception e) {
-            System.err.println("Error cargando icono logo: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Método para redimensionar iconos automáticamente
-     */
-    public void setHamburgerIconWithResize(ImageIcon icon, int size) {
-        if (icon != null) {
-            Image img = icon.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);
-            hamburgerIcon = new ImageIcon(img);
-            if (!expanded) {
-                updateToggleButtonIcon();
-            }
-        }
-    }
-    
-    public void setCloseIconWithResize(ImageIcon icon, int size) {
-        if (icon != null) {
-            Image img = icon.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);
-            closeIcon = new ImageIcon(img);
-            if (expanded) {
-                updateToggleButtonIcon();
-            }
-        }
-    }
-    
-    public void setLogoIconWithResize(ImageIcon icon, int width, int height) {
-        if (icon != null) {
-            Image img = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
-            logoIcon = new ImageIcon(img);
-            updateLogo();
-        }
-    }
-    
-    // Métodos de compatibilidad con versión anterior
-    @Deprecated
-    public void addMenuItem(JComponent component) {
-        // Mantener compatibilidad con versión anterior
-        // Se puede implementar si es necesario
-        System.out.println("Método deprecated: use addMenuItem(String, ImageIcon) en su lugar");
-    }
-    
-    public void addMenuItem(String text) {
-        model.addItem(new SideMenuItem(text));
-    }
-
-    public void addMenuItem(String text, ImageIcon icon) {
-        model.addItem(new SideMenuItem(text, icon));
-    }
-
-    public void addMenuItem(String text, String iconPath) {
-        try {
-            ImageIcon icon = new ImageIcon(iconPath);
-            model.addItem(new SideMenuItem(text, icon));
-        } catch (Exception e) {
-            System.err.println("Error cargando icono desde: " + iconPath);
-            // Agregar sin icono si falla
-            model.addItem(new SideMenuItem(text));
-        }
-    }
-
-    public void addMenuItemWithResourceIcon(String text, String resourcePath) {
-        try {
-            // Para cargar iconos desde recursos del classpath
-            java.net.URL iconURL = getClass().getResource(resourcePath);
-            if (iconURL != null) {
-                ImageIcon icon = new ImageIcon(iconURL);
-                model.addItem(new SideMenuItem(text, icon));
-            } else {
-                System.err.println("Recurso no encontrado: " + resourcePath);
-                model.addItem(new SideMenuItem(text));
-            }
-        } catch (Exception e) {
-            System.err.println("Error cargando icono desde recurso: " + resourcePath);
-            model.addItem(new SideMenuItem(text));
-        }
-    }
-
-    public void addMenuItem(SideMenuItem item) {
-        model.addItem(item);
     }
 }
