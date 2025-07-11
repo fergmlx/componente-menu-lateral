@@ -20,6 +20,7 @@ public class SideMenuComponentBeanInfo extends SimpleBeanInfo {
             properties[0].setDisplayName("Menu Model");
             properties[0].setShortDescription("Modelo de datos para los ítems del menú");
             properties[0].setPropertyEditorClass(SideMenuModelEditor.class);
+            properties[0].setBound(true);
             
             // Propiedad expanded
             properties[1] = new PropertyDescriptor("expanded", SideMenuComponent.class);
@@ -42,34 +43,39 @@ public class SideMenuComponentBeanInfo extends SimpleBeanInfo {
             properties[4].setShortDescription("Color de fondo del menú completo");
             
             // Propiedad iconColor
-            properties[5] = new PropertyDescriptor("iconColor", SideMenuComponent.class);
-            properties[5].setDisplayName("Icon Color");
-            properties[5].setShortDescription("Color del icono de toggle");
-            
-            // Propiedad logoText
-            properties[6] = new PropertyDescriptor("logoText", SideMenuComponent.class);
-            properties[6].setDisplayName("Logo Text");
-            properties[6].setShortDescription("Texto del logo");
+            properties[5] = new PropertyDescriptor("defaultHamburgerIconColor", SideMenuComponent.class);
+            properties[5].setDisplayName("Hamburger Color");
+            properties[5].setShortDescription("Color del icono de toggle predeterminado");
             
             // Propiedad logoFont
-            properties[7] = new PropertyDescriptor("opcionesFont", SideMenuComponent.class);
-            properties[7].setDisplayName("Opciones Font");
-            properties[7].setShortDescription("Fuente del texto de las opciones");
+            properties[6] = new PropertyDescriptor("opcionesFont", SideMenuComponent.class);
+            properties[6].setDisplayName("Opciones Font");
+            properties[6].setShortDescription("Fuente del texto de las opciones");
             
             // Propiedad hamburgerIcon
-            properties[8] = new PropertyDescriptor("hamburgerIcon", SideMenuComponent.class);
-            properties[8].setDisplayName("Hamburger Icon");
-            properties[8].setShortDescription("Icono de hamburger");
+            properties[7] = new PropertyDescriptor("hamburgerIcon", SideMenuComponent.class);
+            properties[7].setDisplayName("Hamburger Icon");
+            properties[7].setShortDescription("Icono de hamburger");
             
             // Propiedad closeIcon
-            properties[9] = new PropertyDescriptor("closeIcon", SideMenuComponent.class);
-            properties[9].setDisplayName("Close Icon");
-            properties[9].setShortDescription("Icono de cerrar menú");
+            properties[8] = new PropertyDescriptor("closeIcon", SideMenuComponent.class);
+            properties[8].setDisplayName("Close Icon");
+            properties[8].setShortDescription("Icono de cerrar menú");
             
             // Propiedad logoIcon
-            properties[10] = new PropertyDescriptor("logoIcon", SideMenuComponent.class);
-            properties[10].setDisplayName("Logo Icon");
-            properties[10].setShortDescription("Icono del logo empresa");
+            properties[9] = new PropertyDescriptor("logoIcon", SideMenuComponent.class);
+            properties[9].setDisplayName("Logo Icon");
+            properties[9].setShortDescription("Icono del logo empresa");
+            
+            // Propiedad hoverColor
+            properties[10] = new PropertyDescriptor("hoverColor", SideMenuComponent.class);
+            properties[10].setDisplayName("Hover Color");
+            properties[10].setShortDescription("Color que toma una opción al pasar el mouse sobre ella");
+            
+            // Propiedad textColor
+            properties[11] = new PropertyDescriptor("textColor", SideMenuComponent.class);
+            properties[11].setDisplayName("Text Color");
+            properties[11].setShortDescription("Color de texto de las opciones");
             
             return properties;
             
