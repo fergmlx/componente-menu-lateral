@@ -2,7 +2,10 @@ package menulateral;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.io.File;
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
 import javax.swing.ImageIcon;
 
 /**
@@ -14,6 +17,8 @@ public class SideMenuItem implements Serializable {
     private String tooltip;
     private boolean enabled = true;
     private Object userData; // Para datos personalizados del usuario
+    private URL iconUrl;
+    private String iconPath;
     
     public SideMenuItem() {
         this("", null);
@@ -23,15 +28,46 @@ public class SideMenuItem implements Serializable {
         this(text, null);
     }
     
-    public SideMenuItem(String text, ImageIcon icon) {
+    public SideMenuItem(String text, String iconPath) {
         this.text = text;
-        this.icon = icon;
+        this.iconPath = iconPath;
+        this.iconUrl = resolveUrl(iconPath);
+        this.icon = (iconUrl != null) ? new ImageIcon(iconUrl) : null;
+    }
+    
+    public SideMenuItem(String text, String iconPath, String tooltip) {
+        this.text = text;
+        this.iconPath = iconPath;
+        this.iconUrl = resolveUrl(iconPath);
+        this.icon = (iconUrl != null) ? new ImageIcon(iconUrl) : null;
+        this.tooltip = tooltip;
     }
     
     public SideMenuItem(String text, ImageIcon icon, String tooltip) {
         this.text = text;
         this.icon = icon;
         this.tooltip = tooltip;
+    }
+    
+    private URL resolveUrl(String path) {
+        if (path == null || path.isEmpty()) return null;
+
+        // 1. Intentar como recurso del classpath (relativo al paquete)
+        URL url = getClass().getResource(path);
+
+        // 2. Si no se encuentra en el classpath, intentar como archivo local
+        if (url == null) {
+            File file = new File(path);
+            if (file.exists()) {
+                try {
+                    url = file.toURI().toURL();
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return url;
     }
     
     // Getters y Setters
@@ -74,6 +110,23 @@ public class SideMenuItem implements Serializable {
     public void setUserData(Object userData) {
         this.userData = userData;
     }
+    
+    public URL getIconUrl() {
+        return iconUrl;
+    }
+
+    public void setIconUrl(URL iconUrl) {
+        this.iconUrl = iconUrl;
+    }
+    
+    public void setIconPath(String iconPath) {
+        this.iconPath = iconPath;
+    }
+    
+    public String getIconPath() {
+        return iconPath;
+    }
+
     
     @Override
     public String toString() {

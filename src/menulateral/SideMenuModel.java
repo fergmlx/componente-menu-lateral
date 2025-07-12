@@ -3,6 +3,7 @@ package menulateral;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -29,8 +30,8 @@ public class SideMenuModel implements Serializable {
         addItem(new SideMenuItem(text));
     }
     
-    public void addItem(String text, javax.swing.ImageIcon icon) {
-        addItem(new SideMenuItem(text, icon));
+    public void addItem(String text, String iconPath) {
+        addItem(new SideMenuItem(text, iconPath));
     }
     
     public void insertItem(int index, SideMenuItem item) {
@@ -95,12 +96,24 @@ public class SideMenuModel implements Serializable {
         listeners.remove(listener);
     }
     
-    private void fireChangeEvent() {
-        ChangeEvent event = new ChangeEvent(this);
-        for (ChangeListener listener : listeners) {
-            listener.stateChanged(event);
-        }
-    }
+    /**
+    * Método mejorado para garantizar que los listeners reciben la notificación
+    */
+   private void fireChangeEvent() {
+       if (listeners.isEmpty()) {
+           return; // No hay listeners que notificar
+       }
+
+       // Crear el evento una sola vez
+       final ChangeEvent event = new ChangeEvent(this);
+
+       // Usar SwingUtilities.invokeLater para asegurar que se ejecuta en el hilo EDT
+       SwingUtilities.invokeLater(() -> {
+           for (ChangeListener listener : new ArrayList<>(listeners)) {
+               listener.stateChanged(event);
+           }
+       });
+   }
     
     @Override
     public String toString() {

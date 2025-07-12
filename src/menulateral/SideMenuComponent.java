@@ -49,6 +49,17 @@ public class SideMenuComponent extends JPanel implements Serializable {
     private final String HAMBURGER_ICON = "☰";
     private final String CLOSE_ICON = "×";
     
+    /**
+     * Clase interna nombrada para el ChangeListener
+     * Esto evita problemas de serialización con clases anónimas
+     */
+    private class ModelChangeListener implements ChangeListener, Serializable {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+            updateMenuItems();
+        }
+    }
+    
     public SideMenuComponent() {
         // Inicializar el modelo
         this.model = new SideMenuModel();
@@ -97,19 +108,19 @@ public class SideMenuComponent extends JPanel implements Serializable {
         contentPanel.setOpaque(false); // Clave para transparencia
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         
-        SideMenuItem item = new SideMenuItem("Inicio", new ImageIcon(getClass().getResource("home.png")));
+        SideMenuItem item = new SideMenuItem("Inicio", "home.png");
         item.setTooltip("Ir a Inicio");
         model.addItem(item);
-        item = new SideMenuItem("Perfil", new ImageIcon(getClass().getResource("perfil.png")));
+        item = new SideMenuItem("Perfil", "perfil.png");
         item.setTooltip("Ver perfil de usuario");
         model.addItem(item);
-        item = new SideMenuItem("Mensajes", new ImageIcon(getClass().getResource("mensaje.png")));
+        item = new SideMenuItem("Mensajes", "mensaje.png");
         item.setTooltip("Ver mensajes");
         model.addItem(item);
-        item = new SideMenuItem("Configuración", new ImageIcon(getClass().getResource("config.png")));
+        item = new SideMenuItem("Configuración", "config.png");
         item.setTooltip("Ir a configuración");
         model.addItem(item);
-        item = new SideMenuItem("Ayuda", new ImageIcon(getClass().getResource("ayuda.png")));
+        item = new SideMenuItem("Ayuda", "ayuda.png");
         item.setTooltip("Ayuda");
         model.addItem(item);
         this.setModel(model);
@@ -147,22 +158,34 @@ public class SideMenuComponent extends JPanel implements Serializable {
     }
     
     private void updateMenuItems() {
-        contentPanel.removeAll();
-        
-        for (SideMenuItem item : model.getItems()) {
-            SideMenuItemPanel itemPanel = new SideMenuItemPanel(item, collapsedWidth);
-            itemPanel.setOpcionesFont(opcionesFont);
-            itemPanel.setHoverColor(hoverColor);
-            itemPanel.setTextColor(textColor);
-            contentPanel.add(itemPanel);
-            contentPanel.add(Box.createVerticalStrut(2)); // Pequeño espaciado
+        try {
+            contentPanel.removeAll();
+
+            if (model == null) return; // Protección contra modelo nulo
+
+            for (SideMenuItem item : model.getItems()) {
+                try {
+                    SideMenuItemPanel itemPanel = new SideMenuItemPanel(item, collapsedWidth);
+                    itemPanel.setOpcionesFont(opcionesFont);
+                    itemPanel.setHoverColor(hoverColor);
+                    itemPanel.setTextColor(textColor);
+                    contentPanel.add(itemPanel);
+                    contentPanel.add(Box.createVerticalStrut(2)); // Pequeño espaciado
+                } catch (Exception itemEx) {
+                    // Si hay error procesando un ítem individual, continuar con el siguiente
+                    System.err.println("Error procesando ítem: " + itemEx.getMessage());
+                }
+            }
+
+            // Agregar espacio flexible al final
+            contentPanel.add(Box.createVerticalGlue());
+
+            revalidate();
+            repaint();
+        } catch (Exception ex) {
+            // Capturar silenciosamente cualquier excepción
+            System.err.println("Error actualizando ítems de menú: " + ex.getMessage());
         }
-        
-        // Agregar espacio flexible al final
-        contentPanel.add(Box.createVerticalGlue());
-        
-        revalidate();
-        repaint();
     }
     
     private void toggleMenu() {
@@ -353,6 +376,34 @@ public class SideMenuComponent extends JPanel implements Serializable {
         g2d.dispose();
     }
     
+    // Añadir este método a SideMenuComponent
+    @Override
+    public void addNotify() {
+        try {
+            super.addNotify();
+
+            // Este método se llama cuando el componente se añade a un contenedor
+            // Es un buen lugar para asegurarse de que todo está correctamente inicializado
+
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    // Forzar actualización del modelo
+                    if (model != null) {
+                        updateMenuItems();
+                    }
+                } catch (Exception ex) {
+                    // Capturar silenciosamente la excepción - esto evitará el diálogo de error
+                    System.err.println("Error al inicializar SideMenuComponent: " + ex.getMessage());
+                    // No propagar la excepción
+                }
+            });
+        } catch (Exception e) {
+            // Capturar silenciosamente la excepción en addNotify
+            System.err.println("Error en addNotify de SideMenuComponent: " + e.getMessage());
+            // No propagar la excepción
+        }
+    }
+    
     // === MÉTODOS DEL MODELO ===
     
     /**
@@ -365,41 +416,38 @@ public class SideMenuComponent extends JPanel implements Serializable {
     
     // Sobrescribir setModel para actualizar el editor
     public void setModel(SideMenuModel model) {
-        if (this.model != null && modelChangeListener != null) {
-            // Remover listener del modelo anterior
-            this.model.removeChangeListener(modelChangeListener);
-        }
+        try {
+            if (this.model != null && modelChangeListener != null) {
+                // Remover listener del modelo anterior
+                this.model.removeChangeListener(modelChangeListener);
+            }
 
-        this.model = model != null ? model : new SideMenuModel();
+            this.model = (model != null) ? model : new SideMenuModel();
 
-        // Agregar listener al nuevo modelo
-        if (modelChangeListener == null) {
-            modelChangeListener = new ChangeListener() {
-                @Override
-                public void stateChanged(ChangeEvent e) {
+            // Agregar listener al nuevo modelo
+            if (modelChangeListener == null) {
+                modelChangeListener = new ModelChangeListener();
+            }
+            this.model.addChangeListener(modelChangeListener);
+
+            // Actualizar la vista inmediatamente
+            SwingUtilities.invokeLater(() -> {
+                try {
                     updateMenuItems();
+                    revalidate();
+                    repaint();
+                } catch (Exception ex) {
+                    System.err.println("Error actualizando ítems del menú: " + ex.getMessage());
                 }
-            };
+            });
+        } catch (Exception e) {
+            System.err.println("Error en setModel: " + e.getMessage());
         }
-        this.model.addChangeListener(modelChangeListener);
-
-        // Actualizar la vista inmediatamente
-        SwingUtilities.invokeLater(() -> {
-            updateMenuItems();
-            revalidate();
-            repaint();
-        });
     }
     
     private void setupModelListener() {
-        // Crear el listener una sola vez
-        modelChangeListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                updateMenuItems();
-            }
-        };
-
+        // Crear el listener usando la clase nombrada en lugar de una anónima
+        modelChangeListener = new ModelChangeListener();
         model.addChangeListener(modelChangeListener);
     }
     
@@ -407,34 +455,12 @@ public class SideMenuComponent extends JPanel implements Serializable {
         model.addItem(new SideMenuItem(text));
     }
 
-    public void addMenuItem(String text, ImageIcon icon) {
-        model.addItem(new SideMenuItem(text, icon));
-    }
-
     public void addMenuItem(String text, String iconPath) {
         try {
-            ImageIcon icon = new ImageIcon(iconPath);
-            model.addItem(new SideMenuItem(text, icon));
+            model.addItem(new SideMenuItem(text, iconPath));
         } catch (Exception e) {
             System.err.println("Error cargando icono desde: " + iconPath);
             // Agregar sin icono si falla
-            model.addItem(new SideMenuItem(text));
-        }
-    }
-
-    public void addMenuItemWithResourceIcon(String text, String resourcePath) {
-        try {
-            // Para cargar iconos desde recursos del classpath
-            java.net.URL iconURL = getClass().getResource(resourcePath);
-            if (iconURL != null) {
-                ImageIcon icon = new ImageIcon(iconURL);
-                model.addItem(new SideMenuItem(text, icon));
-            } else {
-                System.err.println("Recurso no encontrado: " + resourcePath);
-                model.addItem(new SideMenuItem(text));
-            }
-        } catch (Exception e) {
-            System.err.println("Error cargando icono desde recurso: " + resourcePath);
             model.addItem(new SideMenuItem(text));
         }
     }

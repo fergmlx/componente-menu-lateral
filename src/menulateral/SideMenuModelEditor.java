@@ -1,91 +1,47 @@
 package menulateral;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.beans.PropertyEditor;
-import java.beans.PropertyEditorSupport;
-import java.io.File;
+import java.awt.event.*;
+import java.beans.*;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 
 /**
- * Editor personalizado para el SideMenuModel en NetBeans
- * CORREGIDO para funcionar correctamente con el Property Sheet
+ * Editor personalizado para el modelo de SideMenuComponent
+ * Permite editar los ítems del menú desde la ventana de propiedades de NetBeans
  */
-public class SideMenuModelEditor extends PropertyEditorSupport implements PropertyEditor {
+public class SideMenuModelEditor extends PropertyEditorSupport {
     
     private SideMenuModel model;
-    private SideMenuModel workingModel; // Modelo de trabajo para edición
-    private JDialog dialog;
-    private JTable table;
-    private SideMenuTableModel tableModel;
-    private boolean dialogResult = false; // Para saber si se confirmó o canceló
+    private JPanel customPanel;
+    private MenuItemTableModel tableModel;
     
-    @Override
-    public boolean supportsCustomEditor() {
-        return true;
+    public SideMenuModelEditor() {
+        // Inicializar con un modelo vacío si no se proporciona uno
+        model = new SideMenuModel();
     }
     
     @Override
-    public Component getCustomEditor() {
-        // Crear una copia del modelo para editar
-        createWorkingModel();
-        
-        if (dialog == null) {
-            createCustomEditor();
+    public void setValue(Object value) {
+        if (value instanceof SideMenuModel) {
+            this.model = (SideMenuModel) value;
+        } else {
+            this.model = new SideMenuModel();
         }
         
-        // Actualizar el modelo de la tabla con la copia
-        tableModel.setModel(workingModel);
-        
-        // Mostrar el diálogo y esperar respuesta
-        dialog.setVisible(true);
-        
-        return dialog;
-    }
-    
-    /**
-     * Crea una copia del modelo actual para edición
-     */
-    private void createWorkingModel() {
-        workingModel = new SideMenuModel();
-        
-        if (model != null) {
-            // Copiar todos los items del modelo original
-            for (int i = 0; i < model.getItemCount(); i++) {
-                SideMenuItem originalItem = model.getItem(i);
-                SideMenuItem copyItem = new SideMenuItem(
-                    originalItem.getText(), 
-                    originalItem.getIcon()
-                );
-                copyItem.setTooltip(originalItem.getTooltip());
-                copyItem.setEnabled(originalItem.isEnabled());
-                workingModel.addItem(copyItem);
-            }
-        }
-    }
-    
-    @Override
-    public String getJavaInitializationString() {
-        if (model == null || model.getItemCount() == 0) {
-            return "new menulateral.SideMenuModel()";
+        // Notificar cambio para actualizar editor
+        if (tableModel != null) {
+            tableModel.fireTableDataChanged();
         }
         
-        StringBuilder sb = new StringBuilder();
-        sb.append("new menulateral.SideMenuModel()");
-        
-        // Generar código para inicializar el modelo
-        for (int i = 0; i < model.getItemCount(); i++) {
-            SideMenuItem item = model.getItem(i);
-            sb.append(".addItem(new menulateral.SideMenuItem(\"")
-              .append(item.getText())
-              .append("\"))");
-        }
-        
-        return sb.toString();
+        // Notificar a PropertyEditor que el valor ha cambiado
+        firePropertyChange();
     }
     
     @Override
@@ -94,225 +50,250 @@ public class SideMenuModelEditor extends PropertyEditorSupport implements Proper
     }
     
     @Override
-    public void setValue(Object value) {
-        if (value instanceof SideMenuModel) {
-            this.model = (SideMenuModel) value;
-        } else if (value == null) {
-            this.model = new SideMenuModel();
+    public boolean supportsCustomEditor() {
+        return true;
+    }
+    
+    @Override
+    public Component getCustomEditor() {
+        if (customPanel == null) {
+            customPanel = createEditorPanel();
         }
-        
-        // NO llamar a firePropertyChange() aquí para evitar loops
+        return customPanel;
     }
     
     @Override
     public String getAsText() {
-        if (model == null) {
-            return "Modelo vacío";
-        }
-        return "Modelo con " + model.getItemCount() + " elementos";
+        return model.toString();
     }
     
     @Override
     public void setAsText(String text) throws IllegalArgumentException {
-        // No implementado para este editor
-        throw new IllegalArgumentException("No se puede establecer como texto");
+        // No es necesario implementar esto, usamos editor personalizado
     }
     
-    private void createCustomEditor() {
-        // Crear diálogo modal
-        Window parentWindow = null;
-        try {
-            // Intentar obtener la ventana padre de NetBeans
-            parentWindow = SwingUtilities.getWindowAncestor(
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow()
-            );
-        } catch (Exception e) {
-            // Usar null si no se puede obtener
-        }
+    /**
+    * Genera el código Java para inicializar la propiedad del modelo
+    * Este método es usado por NetBeans para generar código en el Source
+    */
+   @Override
+   public String getJavaInitializationString() {
+       StringBuilder sb = new StringBuilder();
+       sb.append("new menulateral.SideMenuModel()");
+
+       // Solo genera código para agregar elementos si hay elementos en el modelo
+       if (model != null && model.getItemCount() > 0) {
+           // Cambiar a un enfoque más directo sin usar lambdas
+           sb.delete(0, sb.length());  // Limpiar el StringBuilder
+
+           sb.append("new menulateral.SideMenuModel() {{ ");
+
+           // Agregar código para cada elemento del modelo usando un bloque de inicialización
+           for (SideMenuItem item : model.getItems()) {
+               if (item != null) {
+                   sb.append("addItem(new menulateral.SideMenuItem(");
+
+                   // Texto del ítem (siempre presente)
+                   sb.append("\"").append(escapeJavaString(item.getText())).append("\"");
+
+                   // Si tiene una ruta de icono, incluirla
+                   if (item.getIconPath() != null && !item.getIconPath().isEmpty()) {
+                       sb.append(", \"").append(escapeJavaString(item.getIconPath())).append("\"");
+                   } else if (item.getTooltip() != null && !item.getTooltip().isEmpty()) {
+                       // No hay icono pero necesitamos incluir null para llegar al tooltip
+                       sb.append(", null");
+                   }
+
+                   // Si tiene tooltip, agregarlo como tercer parámetro
+                   if (item.getTooltip() != null && !item.getTooltip().isEmpty()) {
+                       sb.append(", \"").append(escapeJavaString(item.getTooltip())).append("\"");
+                   }
+
+                   sb.append(")); ");
+
+                   // Si está deshabilitado, añadir código para deshabilitarlo
+                   if (!item.isEnabled()) {
+                       sb.append("getItem(").append(model.indexOf(item)).append(").setEnabled(false); ");
+                   }
+               }
+           }
+
+           sb.append("}}");
+       }
+
+       return sb.toString();
+   }
+    
+    /**
+     * Escapa caracteres especiales en strings Java
+     */
+    private String escapeJavaString(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\")
+                 .replace("\"", "\\\"")
+                 .replace("\n", "\\n")
+                 .replace("\r", "\\r")
+                 .replace("\t", "\\t");
+    }
+    
+    /**
+     * Crea el panel del editor personalizado
+     */
+    private JPanel createEditorPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(new EmptyBorder(5, 5, 5, 5));
         
-        if (parentWindow instanceof Frame) {
-            dialog = new JDialog((Frame) parentWindow, "Editor de Menú", true);
-        } else if (parentWindow instanceof Dialog) {
-            dialog = new JDialog((Dialog) parentWindow, "Editor de Menú", true);
-        } else {
-            dialog = new JDialog((Frame) null, "Editor de Menú", true);
-        }
+        // Crear modelo de tabla y tabla
+        tableModel = new MenuItemTableModel();
+        JTable table = new JTable(tableModel);
+        table.setRowHeight(25);
         
-        dialog.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
-        dialog.setSize(700, 500);
-        dialog.setLocationRelativeTo(parentWindow);
+        // Configurar renderizadores y editores para la columna de iconos
+        table.getColumnModel().getColumn(1).setCellRenderer(new IconRenderer());
+        table.getColumnModel().getColumn(1).setCellEditor(new IconEditor());
         
-        // Crear modelo de tabla
-        tableModel = new SideMenuTableModel();
-        
-        // Crear tabla
-        table = new JTable(tableModel);
-        table.setRowHeight(30);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
-        // Configurar columnas
-        if (table.getColumnModel().getColumnCount() >= 4) {
-            table.getColumnModel().getColumn(0).setPreferredWidth(200); // Texto
-            table.getColumnModel().getColumn(1).setPreferredWidth(100); // Icono
-            table.getColumnModel().getColumn(2).setPreferredWidth(200); // Tooltip
-            table.getColumnModel().getColumn(3).setPreferredWidth(80);  // Enabled
-        }
-        
-        // Panel principal
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        
-        // Panel de tabla
+        // Agregar tabla a un JScrollPane
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Elementos del Menú"));
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        scrollPane.setPreferredSize(new Dimension(350, 200));
+        panel.add(scrollPane, BorderLayout.CENTER);
         
         // Panel de botones
-        JPanel buttonPanel = createButtonPanel();
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-        
-        dialog.add(mainPanel);
-        
-        // Configurar el comportamiento del diálogo
-        dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                dialogResult = false;
-            }
-        });
-    }
-    
-    private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        
-        // Panel de botones de edición
-        JPanel editPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         
         JButton addButton = new JButton("Agregar");
-        addButton.addActionListener(e -> addMenuItem());
+        addButton.addActionListener(e -> addNewItem());
         
         JButton removeButton = new JButton("Eliminar");
-        removeButton.addActionListener(e -> removeMenuItem());
-        
-        JButton upButton = new JButton("↑ Subir");
-        upButton.addActionListener(e -> moveUp());
-        
-        JButton downButton = new JButton("↓ Bajar");
-        downButton.addActionListener(e -> moveDown());
-        
-        editPanel.add(addButton);
-        editPanel.add(removeButton);
-        editPanel.add(Box.createHorizontalStrut(10));
-        editPanel.add(upButton);
-        editPanel.add(downButton);
-        
-        // Panel de botones de confirmación
-        JPanel confirmPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
-        JButton okButton = new JButton("Aceptar");
-        okButton.addActionListener(e -> {
-            dialogResult = true;
-            applyChanges();
-            dialog.setVisible(false);
+        removeButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow >= 0) {
+                removeItem(selectedRow);
+            }
         });
         
-        JButton cancelButton = new JButton("Cancelar");
-        cancelButton.addActionListener(e -> {
-            dialogResult = false;
-            dialog.setVisible(false);
+        JButton moveUpButton = new JButton("↑");
+        moveUpButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow > 0) {
+                moveItem(selectedRow, selectedRow - 1);
+                table.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
+            }
         });
         
-        confirmPanel.add(okButton);
-        confirmPanel.add(cancelButton);
+        JButton moveDownButton = new JButton("↓");
+        moveDownButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow >= 0 && selectedRow < tableModel.getRowCount() - 1) {
+                moveItem(selectedRow, selectedRow + 1);
+                table.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
+            }
+        });
         
-        panel.add(editPanel, BorderLayout.WEST);
-        panel.add(confirmPanel, BorderLayout.EAST);
+        buttonPanel.add(addButton);
+        buttonPanel.add(removeButton);
+        buttonPanel.add(moveUpButton);
+        buttonPanel.add(moveDownButton);
+        
+        panel.add(buttonPanel, BorderLayout.SOUTH);
         
         return panel;
     }
     
     /**
-     * Aplica los cambios del modelo de trabajo al modelo real
+     * Agrega un nuevo ítem al modelo
      */
-    private void applyChanges() {
-        if (workingModel != null) {
-            // Limpiar el modelo actual
-            if (model == null) {
-                model = new SideMenuModel();
-            } else {
-                model.removeAllItems();
-            }
-            
-            // Copiar todos los elementos del modelo de trabajo
-            for (int i = 0; i < workingModel.getItemCount(); i++) {
-                SideMenuItem item = workingModel.getItem(i);
-                SideMenuItem copyItem = new SideMenuItem(item.getText(), item.getIcon());
-                copyItem.setTooltip(item.getTooltip());
-                copyItem.setEnabled(item.isEnabled());
-                model.addItem(copyItem);
-            }
-            
-            // Notificar que la propiedad ha cambiado
-            firePropertyChange();
-        }
-    }
-    
-    private void addMenuItem() {
-        String text = JOptionPane.showInputDialog(dialog, "Texto del elemento:", "Nuevo Elemento");
-        if (text != null && !text.trim().isEmpty()) {
-            SideMenuItem item = new SideMenuItem(text.trim());
-            workingModel.addItem(item);
-            tableModel.fireTableDataChanged();
-        }
-    }
-    
-    private void removeMenuItem() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow >= 0) {
-            workingModel.removeItem(selectedRow);
-            tableModel.fireTableDataChanged();
-        } else {
-            JOptionPane.showMessageDialog(dialog, "Seleccione un elemento para eliminar");
-        }
-    }
-    
-    private void moveUp() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow > 0) {
-            SideMenuItem item = workingModel.getItem(selectedRow);
-            workingModel.removeItem(selectedRow);
-            workingModel.insertItem(selectedRow - 1, item);
-            tableModel.fireTableDataChanged();
-            table.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
-        }
-    }
-    
-    private void moveDown() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow >= 0 && selectedRow < workingModel.getItemCount() - 1) {
-            SideMenuItem item = workingModel.getItem(selectedRow);
-            workingModel.removeItem(selectedRow);
-            workingModel.insertItem(selectedRow + 1, item);
-            tableModel.fireTableDataChanged();
-            table.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
-        }
+    private void addNewItem() {
+        SideMenuItem newItem = new SideMenuItem("Nuevo Item");
+        
+        // Crear una copia del modelo actual y agregar el nuevo ítem
+        SideMenuModel newModel = cloneModel(model);
+        newModel.addItem(newItem);
+        
+        // Establecer el nuevo modelo y notificar cambio
+        model = newModel;
+        tableModel.fireTableDataChanged();
+        firePropertyChange();
     }
     
     /**
-     * Modelo de tabla para editar los ítems del menú
+     * Elimina un ítem del modelo
      */
-    private class SideMenuTableModel extends AbstractTableModel {
-        private final String[] columnNames = {"Texto", "Icono", "Tooltip", "Habilitado"};
-        private SideMenuModel menuModel;
+    private void removeItem(int index) {
+        // Crear una copia del modelo actual y eliminar el ítem
+        SideMenuModel newModel = cloneModel(model);
+        newModel.removeItem(index);
         
-        public void setModel(SideMenuModel model) {
-            this.menuModel = model;
-            fireTableDataChanged();
-        }
+        // Establecer el nuevo modelo y notificar cambio
+        model = newModel;
+        tableModel.fireTableDataChanged();
+        firePropertyChange();
+    }
+    
+    /**
+     * Mueve un ítem de una posición a otra
+     */
+    private void moveItem(int fromIndex, int toIndex) {
+        List<SideMenuItem> items = model.getItems();
+        SideMenuItem item = items.get(fromIndex);
+        
+        // Crear una copia del modelo con el nuevo orden
+        SideMenuModel newModel = cloneModel(model);
+        List<SideMenuItem> newItems = newModel.getItems();
+        newItems.remove(fromIndex);
+        newItems.add(toIndex, item);
+        newModel.setItems(newItems);
+        
+        // Establecer el nuevo modelo y notificar cambio
+        model = newModel;
+        tableModel.fireTableDataChanged();
+        firePropertyChange();
+    }
+    
+    /**
+    * Crea una copia del modelo para evitar problemas de referencia
+    */
+   private SideMenuModel cloneModel(SideMenuModel sourceModel) {
+       SideMenuModel newModel = new SideMenuModel();
+       for (SideMenuItem item : sourceModel.getItems()) {
+           // Clonar cada ítem preservando el iconPath
+           SideMenuItem newItem;
+
+           if (item.getIconPath() != null && !item.getIconPath().isEmpty()) {
+               // Si tiene una ruta de icono, usarla para conservar la referencia
+               newItem = new SideMenuItem(
+                       item.getText(),
+                       item.getIconPath(),
+                       item.getTooltip());
+           } else {
+               // Si no tiene ruta pero sí icono, usar el constructor con ImageIcon
+               newItem = new SideMenuItem(
+                       item.getText(),
+                       item.getIcon(),
+                       item.getTooltip());
+           }
+
+           newItem.setEnabled(item.isEnabled());
+           newItem.setUserData(item.getUserData());
+
+           // Asegurarse de que las URLs también se preserven
+           if (item.getIconUrl() != null) {
+               newItem.setIconUrl(item.getIconUrl());
+           }
+
+           newModel.addItem(newItem);
+       }
+       return newModel;
+   }
+    
+    /**
+     * Modelo de tabla para los ítems del menú
+     */
+    private class MenuItemTableModel extends AbstractTableModel {
+        private final String[] columnNames = {"Texto", "Icono", "Tooltip", "Habilitado"};
         
         @Override
         public int getRowCount() {
-            return menuModel != null ? menuModel.getItemCount() : 0;
+            return model.getItemCount();
         }
         
         @Override
@@ -328,11 +309,9 @@ public class SideMenuModelEditor extends PropertyEditorSupport implements Proper
         @Override
         public Class<?> getColumnClass(int columnIndex) {
             switch (columnIndex) {
-                case 0: return String.class;  // Texto
-                case 1: return String.class;  // Icono (path)
-                case 2: return String.class;  // Tooltip
-                case 3: return Boolean.class; // Enabled
-                default: return Object.class;
+                case 1: return ImageIcon.class;
+                case 3: return Boolean.class;
+                default: return String.class;
             }
         }
         
@@ -343,15 +322,13 @@ public class SideMenuModelEditor extends PropertyEditorSupport implements Proper
         
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            if (menuModel == null || rowIndex >= menuModel.getItemCount()) {
-                return null;
-            }
+            SideMenuItem item = model.getItem(rowIndex);
+            if (item == null) return null;
             
-            SideMenuItem item = menuModel.getItem(rowIndex);
             switch (columnIndex) {
                 case 0: return item.getText();
-                case 1: return item.getIcon() != null ? item.getIcon().getDescription() : "";
-                case 2: return item.getTooltip() != null ? item.getTooltip() : "";
+                case 1: return item.getIcon();
+                case 2: return item.getTooltip();
                 case 3: return item.isEnabled();
                 default: return null;
             }
@@ -359,48 +336,139 @@ public class SideMenuModelEditor extends PropertyEditorSupport implements Proper
         
         @Override
         public void setValueAt(Object value, int rowIndex, int columnIndex) {
-            if (menuModel == null || rowIndex >= menuModel.getItemCount()) {
-                return;
-            }
-            
-            SideMenuItem item = menuModel.getItem(rowIndex);
+            // Crear una copia del modelo actual
+            SideMenuModel newModel = cloneModel(model);
+            SideMenuItem item = newModel.getItem(rowIndex);
+            if (item == null) return;
+
             switch (columnIndex) {
                 case 0:
-                    if (value != null) {
-                        item.setText(value.toString());
-                    }
+                    item.setText((String) value);
                     break;
                 case 1:
-                    // Para el icono - selector de archivo
-                    String iconPath = value != null ? value.toString() : "";
-                    if (!iconPath.trim().isEmpty()) {
-                        try {
-                            // Intentar cargar desde recursos primero
-                            java.net.URL iconURL = getClass().getResource(iconPath);
-                            if (iconURL != null) {
-                                item.setIcon(new ImageIcon(iconURL));
-                            } else {
-                                // Intentar cargar desde archivo
-                                item.setIcon(new ImageIcon(iconPath));
-                            }
-                        } catch (Exception e) {
-                            JOptionPane.showMessageDialog(dialog, 
-                                "Error cargando icono: " + e.getMessage());
-                        }
-                    } else {
-                        item.setIcon(null);
+                    if (value instanceof IconData) {
+                        IconData iconData = (IconData) value;
+                        // Actualizar tanto el icono como su ruta
+                        item.setIcon(iconData.icon);
+                        item.setIconPath(iconData.path);
+                    } else if (value instanceof ImageIcon) {
+                        // Manejar el caso antiguo para compatibilidad
+                        item.setIcon((ImageIcon) value);
                     }
                     break;
                 case 2:
-                    item.setTooltip(value != null ? value.toString() : null);
+                    item.setTooltip((String) value);
                     break;
                 case 3:
-                    if (value instanceof Boolean) {
-                        item.setEnabled((Boolean) value);
-                    }
+                    item.setEnabled((Boolean) value);
                     break;
             }
+
+            // Actualizar el modelo y notificar cambios
+            model = newModel;
             fireTableCellUpdated(rowIndex, columnIndex);
+            firePropertyChange(); // Notificar cambio a PropertyEditor
+        }
+    }
+    
+    /**
+     * Renderizador para la columna de iconos
+     */
+    private class IconRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            
+            JLabel label = (JLabel) super.getTableCellRendererComponent(
+                    table, "", isSelected, hasFocus, row, column);
+            
+            if (value instanceof ImageIcon) {
+                label.setIcon((ImageIcon) value);
+                label.setHorizontalAlignment(JLabel.CENTER);
+            } else {
+                label.setIcon(null);
+            }
+            
+            return label;
+        }
+    }
+    
+    /**
+     * Editor para la columna de iconos
+     */
+    private class IconEditor extends AbstractCellEditor implements TableCellEditor {
+        private final JButton button;
+        private ImageIcon currentIcon;
+        private String currentIconPath; // Añadir para almacenar la ruta del icono
+
+        public IconEditor() {
+            button = new JButton();
+            button.setBorderPainted(false);
+            button.setContentAreaFilled(false);
+
+            button.addActionListener(e -> {
+                // Mostrar diálogo para seleccionar icono
+                JFileChooser chooser = new JFileChooser();
+                chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                        "Imágenes", "jpg", "png", "gif"));
+
+                int result = chooser.showOpenDialog(button);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        // Guardar la ruta del archivo seleccionado
+                        currentIconPath = chooser.getSelectedFile().getPath();
+
+                        // Crear el icono para la previsualización
+                        ImageIcon icon = new ImageIcon(currentIconPath);
+                        // Redimensionar icono
+                        Image img = icon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+                        currentIcon = new ImageIcon(img);
+                        button.setIcon(currentIcon);
+                        fireEditingStopped();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(button, 
+                                "Error al cargar la imagen: " + ex.getMessage(),
+                                "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            // Devolver el iconPath en lugar del ImageIcon
+            return new IconData(currentIcon, currentIconPath);
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int row, int column) {
+
+            // Inicializar con los valores actuales del ítem
+            SideMenuItem item = model.getItem(row);
+            if (item != null) {
+                currentIcon = item.getIcon();
+                currentIconPath = item.getIconPath();
+            } else {
+                currentIcon = null;
+                currentIconPath = null;
+            }
+
+            button.setIcon(currentIcon);
+            return button;
+        }
+    }
+    
+    /**
+    * Clase auxiliar para transportar tanto el icono como su ruta
+    */
+    private class IconData {
+        ImageIcon icon;
+        String path;
+
+        public IconData(ImageIcon icon, String path) {
+            this.icon = icon;
+            this.path = path;
         }
     }
 }
