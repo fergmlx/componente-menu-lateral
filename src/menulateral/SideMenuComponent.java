@@ -9,7 +9,6 @@ import java.beans.BeanProperty;
 import java.io.Serializable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -44,10 +43,6 @@ public class SideMenuComponent extends JPanel implements Serializable {
     private JLabel logoLabel;
     private JButton toggleButton;
     private JPanel contentPanel;
-    
-    // Iconos como strings para las barras (fallback)
-    private final String HAMBURGER_ICON = "☰";
-    private final String CLOSE_ICON = "×";
     
     /**
      * Clase interna nombrada para el ChangeListener
@@ -301,19 +296,11 @@ public class SideMenuComponent extends JPanel implements Serializable {
             if (closeIcon != null) {
                 toggleButton.setIcon(closeIcon);
                 toggleButton.setText("");
-            } else {
-                toggleButton.setIcon(null);
-                toggleButton.setText(CLOSE_ICON);
-                toggleButton.setFont(new Font("Arial", Font.PLAIN, 20));
             }
         } else {
             if (hamburgerIcon != null) {
                 toggleButton.setIcon(hamburgerIcon);
                 toggleButton.setText("");
-            } else {
-                toggleButton.setIcon(null);
-                toggleButton.setText(HAMBURGER_ICON);
-                toggleButton.setFont(new Font("Arial", Font.PLAIN, 18));
             }
         }
     }
@@ -341,6 +328,21 @@ public class SideMenuComponent extends JPanel implements Serializable {
         }
     }
     
+    @Override
+    protected void paintComponent(Graphics g) {
+        // No llamar a super.paintComponent() para evitar pintar el fondo automáticamente
+        Graphics2D g2d = (Graphics2D) g.create();
+        
+        // Anti-aliasing para bordes suaves
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        // Dibujar fondo con bordes redondeados usando backgroundColor
+        g2d.setColor(backgroundColor);
+        g2d.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 10, 10));
+        
+        g2d.dispose();
+    }
+    
     private Icon scaleIconToSize(Icon icon, int width, int height) {
         // Convertir Icon a ImageIcon para obtener la Image
         ImageIcon imageIcon;
@@ -361,49 +363,6 @@ public class SideMenuComponent extends JPanel implements Serializable {
         return new ImageIcon(img);
     }
     
-    @Override
-    protected void paintComponent(Graphics g) {
-        // No llamar a super.paintComponent() para evitar pintar el fondo automáticamente
-        Graphics2D g2d = (Graphics2D) g.create();
-        
-        // Anti-aliasing para bordes suaves
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-        // Dibujar fondo con bordes redondeados usando backgroundColor
-        g2d.setColor(backgroundColor);
-        g2d.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 10, 10));
-        
-        g2d.dispose();
-    }
-    
-    // Añadir este método a SideMenuComponent
-    @Override
-    public void addNotify() {
-        try {
-            super.addNotify();
-
-            // Este método se llama cuando el componente se añade a un contenedor
-            // Es un buen lugar para asegurarse de que todo está correctamente inicializado
-
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    // Forzar actualización del modelo
-                    if (model != null) {
-                        updateMenuItems();
-                    }
-                } catch (Exception ex) {
-                    // Capturar silenciosamente la excepción - esto evitará el diálogo de error
-                    System.err.println("Error al inicializar SideMenuComponent: " + ex.getMessage());
-                    // No propagar la excepción
-                }
-            });
-        } catch (Exception e) {
-            // Capturar silenciosamente la excepción en addNotify
-            System.err.println("Error en addNotify de SideMenuComponent: " + e.getMessage());
-            // No propagar la excepción
-        }
-    }
-    
     // === MÉTODOS DEL MODELO ===
     
     /**
@@ -414,7 +373,6 @@ public class SideMenuComponent extends JPanel implements Serializable {
         return model;
     }
     
-    // Sobrescribir setModel para actualizar el editor
     public void setModel(SideMenuModel model) {
         try {
             if (this.model != null && modelChangeListener != null) {

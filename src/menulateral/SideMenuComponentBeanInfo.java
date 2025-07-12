@@ -1,8 +1,6 @@
 package menulateral;
 
 import java.beans.*;
-import java.awt.Image;
-import javax.swing.ImageIcon;
 
 /**
  * BeanInfo para el componente SideMenuComponent
@@ -13,7 +11,7 @@ public class SideMenuComponentBeanInfo extends SimpleBeanInfo {
     @Override
     public PropertyDescriptor[] getPropertyDescriptors() {
         try {
-            PropertyDescriptor[] properties = new PropertyDescriptor[11];
+            PropertyDescriptor[] properties = new PropertyDescriptor[12];
             
             // Propiedad model (NUEVA)
             properties[0] = new PropertyDescriptor("model", SideMenuComponent.class);
@@ -83,13 +81,6 @@ public class SideMenuComponentBeanInfo extends SimpleBeanInfo {
             e.printStackTrace();
             return super.getPropertyDescriptors();
         }
-    }
-    
-    @Override
-    public Image getIcon(int iconKind) {
-        // Puedes crear un icono personalizado para el componente en la paleta
-        // Por ahora devolvemos null para usar el icono por defecto
-        return null;
     }
     
     @Override

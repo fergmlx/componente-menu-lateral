@@ -268,7 +268,7 @@ public class SideMenuModelEditor extends PropertyEditorSupport {
                // Si no tiene ruta pero sí icono, usar el constructor con ImageIcon
                newItem = new SideMenuItem(
                        item.getText(),
-                       item.getIcon(),
+                       item.getIconPath(),
                        item.getTooltip());
            }
 
