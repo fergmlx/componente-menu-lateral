@@ -25,6 +25,7 @@ public class SideMenuComponent extends JPanel implements Serializable {
     private Color backgroundColor = Color.WHITE;
     private Color defaultHamburgerIconColor = Color.BLACK;
     private Color hoverColor = Color.CYAN;
+    private Color textHoverColor = Color.BLACK;
     private Color textColor = Color.BLACK;
     private String logoText = "";
     private Font opcionesFont = new Font("Poppins SemiBold", Font.PLAIN, 14);
@@ -114,19 +115,19 @@ public class SideMenuComponent extends JPanel implements Serializable {
         contentPanel.setOpaque(false); // Clave para transparencia
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         
-        SideMenuItem item = new SideMenuItem("Inicio", "home.png");
+        SideMenuItem item = new SideMenuItem("Inicio", "/icons/home.png");
         item.setTooltip("Ir a Inicio");
         model.addItem(item);
-        item = new SideMenuItem("Perfil", "perfil.png");
+        item = new SideMenuItem("Perfil", "/icons/perfil.png");
         item.setTooltip("Ver perfil de usuario");
         model.addItem(item);
-        item = new SideMenuItem("Mensajes", "mensaje.png");
+        item = new SideMenuItem("Mensajes", "/icons/mensaje.png");
         item.setTooltip("Ver mensajes");
         model.addItem(item);
-        item = new SideMenuItem("Configuración", "config.png");
+        item = new SideMenuItem("Configuración", "/icons/config.png");
         item.setTooltip("Ir a configuración");
         model.addItem(item);
-        item = new SideMenuItem("Ayuda", "ayuda.png");
+        item = new SideMenuItem("Ayuda", "/icons/ayuda.png");
         item.setTooltip("Ayuda");
         model.addItem(item);
         this.setModel(model);
@@ -194,6 +195,7 @@ public class SideMenuComponent extends JPanel implements Serializable {
         SideMenuItemPanel itemPanel = new SideMenuItemPanel(item, collapsedWidth);
         itemPanel.setOpcionesFont(opcionesFont);
         itemPanel.setHoverColor(hoverColor);
+        itemPanel.setTextHoverColor(textHoverColor);
         itemPanel.setTextColor(textColor);
 
         // Informar al panel si el menú está expandido o no
@@ -555,6 +557,14 @@ public class SideMenuComponent extends JPanel implements Serializable {
     
     public void setHoverColor(Color hoverColor) {
         this.hoverColor = hoverColor;
+    }
+    
+    public Color getTextHoverColor() {
+        return textHoverColor;
+    }
+    
+    public void setTextHoverColor(Color textHoverColor) {
+        this.textHoverColor = textHoverColor;
     }
     
     public Color getTextColor() {

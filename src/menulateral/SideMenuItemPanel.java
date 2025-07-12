@@ -21,6 +21,7 @@ public class SideMenuItemPanel extends JPanel {
     private boolean isHovered = false;
     private boolean isSelected = false;
     private Color hoverColor = Color.CYAN;
+    private Color textHoverColor = Color.BLACK;
     private Color selectedColor = new Color(80, 80, 80);
     private Color textColor = Color.BLACK;
     private Color disabledColor = new Color(120, 120, 120);
@@ -124,7 +125,7 @@ public class SideMenuItemPanel extends JPanel {
                 if (menuItem.isEnabled()) {
                     isHovered = true;
                     repaint();
-                    textLabel.setForeground(Color.BLACK);
+                    textLabel.setForeground(textHoverColor);
                 }
             }
             
@@ -317,6 +318,14 @@ public class SideMenuItemPanel extends JPanel {
     
     public void setHoverColor(Color hoverColor) {
         this.hoverColor = hoverColor;
+    }
+    
+    public Color getTextHoverColor() {
+        return textHoverColor;
+    }
+    
+    public void setTextHoverColor(Color textHoverColor) {
+        this.textHoverColor = textHoverColor;
     }
     
     public Color getSelectedColor() {
