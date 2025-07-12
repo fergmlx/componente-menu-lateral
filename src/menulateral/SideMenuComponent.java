@@ -22,10 +22,10 @@ public class SideMenuComponent extends JPanel implements Serializable {
     private boolean expanded = false;
     private int collapsedWidth = 60;
     private int expandedWidth = 250;
-    private Color backgroundColor = new Color(45, 45, 45);
-    private Color defaultHamburgerIconColor = Color.WHITE;
-    private Color hoverColor = Color.WHITE;
-    private Color textColor = Color.WHITE;
+    private Color backgroundColor = Color.WHITE;
+    private Color defaultHamburgerIconColor = Color.BLACK;
+    private Color hoverColor = Color.CYAN;
+    private Color textColor = Color.BLACK;
     private String logoText = "";
     private Font opcionesFont = new Font("Poppins SemiBold", Font.PLAIN, 14);
     private ChangeListener modelChangeListener;
@@ -51,6 +51,17 @@ public class SideMenuComponent extends JPanel implements Serializable {
     private class ModelChangeListener implements ChangeListener, Serializable {
         @Override
         public void stateChanged(ChangeEvent e) {
+            updateMenuItems();
+        }
+    }
+    
+    /**
+    * Clase interna nombrada para el ExpandCollapseListener
+    * Esto evita problemas de serialización con expresiones lambda
+    */
+    private class ItemExpandCollapseListener implements SideMenuItemPanel.ExpandCollapseListener, Serializable {
+        @Override
+        public void onExpandCollapse(SideMenuItem item) {
             updateMenuItems();
         }
     }
@@ -158,16 +169,11 @@ public class SideMenuComponent extends JPanel implements Serializable {
 
             if (model == null) return; // Protección contra modelo nulo
 
+            // Usar un método recursivo para mostrar items con jerarquía
             for (SideMenuItem item : model.getItems()) {
                 try {
-                    SideMenuItemPanel itemPanel = new SideMenuItemPanel(item, collapsedWidth);
-                    itemPanel.setOpcionesFont(opcionesFont);
-                    itemPanel.setHoverColor(hoverColor);
-                    itemPanel.setTextColor(textColor);
-                    contentPanel.add(itemPanel);
-                    contentPanel.add(Box.createVerticalStrut(2)); // Pequeño espaciado
+                    addMenuItemToPanel(item, contentPanel);
                 } catch (Exception itemEx) {
-                    // Si hay error procesando un ítem individual, continuar con el siguiente
                     System.err.println("Error procesando ítem: " + itemEx.getMessage());
                 }
             }
@@ -178,15 +184,55 @@ public class SideMenuComponent extends JPanel implements Serializable {
             revalidate();
             repaint();
         } catch (Exception ex) {
-            // Capturar silenciosamente cualquier excepción
             System.err.println("Error actualizando ítems de menú: " + ex.getMessage());
         }
     }
     
+    // Método recursivo para añadir items y sus hijos
+    private void addMenuItemToPanel(SideMenuItem item, JPanel parentPanel) {
+        // Crear el panel para este ítem
+        SideMenuItemPanel itemPanel = new SideMenuItemPanel(item, collapsedWidth);
+        itemPanel.setOpcionesFont(opcionesFont);
+        itemPanel.setHoverColor(hoverColor);
+        itemPanel.setTextColor(textColor);
+
+        // Informar al panel si el menú está expandido o no
+        itemPanel.updateMenuExpandedState(expanded);
+
+        // Establecer listener para expansión/colapso usando la clase nombrada
+        itemPanel.setExpandCollapseListener(new ItemExpandCollapseListener());
+
+        parentPanel.add(itemPanel);
+        parentPanel.add(Box.createVerticalStrut(2)); // Pequeño espaciado
+
+        // Si tiene hijos y está expandido, mostrar los hijos
+        if (item.isHasChildren() && item.isExpanded()) {
+            for (SideMenuItem child : item.getChildren()) {
+                addMenuItemToPanel(child, parentPanel);
+            }
+        }
+    }
+    
+    /**
+    * Método toggleMenu modificado para actualizar el estado de expansión
+    */
     private void toggleMenu() {
         expanded = !expanded;
         updateLayout();
+        updateItemsExpandedState(); // Actualizar estado de expansión en los ítems
         animateResize();
+    }
+    
+    /**
+    * Método para actualizar el estado de los ítems cuando el menú cambia
+    */
+    private void updateItemsExpandedState() {
+        // Recorrer todos los componentes del contentPanel
+        for (Component comp : contentPanel.getComponents()) {
+            if (comp instanceof SideMenuItemPanel) {
+                ((SideMenuItemPanel) comp).updateMenuExpandedState(expanded);
+            }
+        }
     }
     
     private void updateLayout() {

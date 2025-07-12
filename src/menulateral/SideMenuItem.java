@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.ImageIcon;
 
 /**
@@ -18,6 +20,12 @@ public class SideMenuItem implements Serializable {
     private URL iconUrl;
     private String iconPath;
     
+    // Propiedades para submenús
+    private boolean hasChildren = false;
+    private boolean expanded = false;
+    private List<SideMenuItem> children;
+    private int level = 0; // Nivel de anidamiento
+    
     public SideMenuItem() {
         this("", null);
     }
@@ -31,6 +39,7 @@ public class SideMenuItem implements Serializable {
         this.iconPath = iconPath;
         this.iconUrl = resolveUrl(iconPath);
         this.icon = (iconUrl != null) ? new ImageIcon(iconUrl) : null;
+        this.children = new ArrayList<>();
     }
     
     public SideMenuItem(String text, String iconPath, String tooltip) {
@@ -39,6 +48,7 @@ public class SideMenuItem implements Serializable {
         this.iconUrl = resolveUrl(iconPath);
         this.icon = (iconUrl != null) ? new ImageIcon(iconUrl) : null;
         this.tooltip = tooltip;
+        this.children = new ArrayList<>();
     }
     
     private URL resolveUrl(String path) {
@@ -62,7 +72,68 @@ public class SideMenuItem implements Serializable {
         return url;
     }
     
-    // Getters y Setters
+    // Métodos para submenús
+    public void addChild(SideMenuItem child) {
+        if (child != null) {
+            child.setLevel(this.level + 1);
+            this.children.add(child);
+            this.hasChildren = true;
+        }
+    }
+    
+    public void removeChild(SideMenuItem child) {
+        if (this.children.remove(child)) {
+            this.hasChildren = !this.children.isEmpty();
+        }
+    }
+    
+    public void removeChild(int index) {
+        if (index >= 0 && index < children.size()) {
+            this.children.remove(index);
+            this.hasChildren = !this.children.isEmpty();
+        }
+    }
+    
+    public List<SideMenuItem> getChildren() {
+        return new ArrayList<>(children);
+    }
+    
+    public int getChildCount() {
+        return children.size();
+    }
+    
+    public SideMenuItem getChild(int index) {
+        if (index >= 0 && index < children.size()) {
+            return children.get(index);
+        }
+        return null;
+    }
+    
+    public boolean isHasChildren() {
+        return hasChildren;
+    }
+    
+    public boolean isExpanded() {
+        return expanded;
+    }
+    
+    public void setExpanded(boolean expanded) {
+        this.expanded = expanded;
+    }
+    
+    public void toggleExpanded() {
+        this.expanded = !this.expanded;
+    }
+    
+    public int getLevel() {
+        return level;
+    }
+    
+    public void setLevel(int level) {
+        this.level = level;
+    }
+    
+    // Getters y Setters originales
     public String getText() {
         return text;
     }

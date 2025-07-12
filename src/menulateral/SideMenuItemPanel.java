@@ -3,6 +3,7 @@ package menulateral;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -14,15 +15,23 @@ public class SideMenuItemPanel extends JPanel {
     private SideMenuItem menuItem;
     private JLabel iconLabel;
     private int iconLabelWidth;
-    private int textLabelWidth;
     private JLabel textLabel;
+    private JLabel expandCollapseLabel; // Nuevo: indicador de expansión
     private Font opcionesFont = new Font("Poppins", Font.PLAIN, 14);
     private boolean isHovered = false;
     private boolean isSelected = false;
-    private Color hoverColor = Color.WHITE;
+    private Color hoverColor = Color.CYAN;
     private Color selectedColor = new Color(80, 80, 80);
-    private Color textColor = Color.WHITE;
+    private Color textColor = Color.BLACK;
     private Color disabledColor = new Color(120, 120, 120);
+    private ExpandCollapseListener expandListener;
+    
+    private boolean menuFullyExpanded = false;
+    
+    // Interfaz para notificar expansión/colapso
+    public interface ExpandCollapseListener {
+        void onExpandCollapse(SideMenuItem item);
+    }
     
     public SideMenuItemPanel(SideMenuItem item, int iconLabelWidth) {
         this.menuItem = item;
@@ -37,8 +46,43 @@ public class SideMenuItemPanel extends JPanel {
         setLayout(new BorderLayout());
         setOpaque(false);
         setPreferredSize(new Dimension(250, 45));
-        setBorder(new EmptyBorder(5, 0, 5, 10));
+        // Añadir indentación basada en el nivel del ítem
+        int leftPadding = menuItem.getLevel() * 15; // 15px por nivel
+        setBorder(new EmptyBorder(5, leftPadding, 5, 10));
         setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }
+    
+    /**
+     * Actualiza el panel según el estado expandido del menú principal
+     * @param isMenuExpanded true si el menú lateral está expandido
+     */
+    public void updateMenuExpandedState(boolean isMenuExpanded) {
+        this.menuFullyExpanded = isMenuExpanded;
+        updateExpandCollapseVisibility();
+        revalidate();
+        repaint();
+    }
+    
+    /**
+     * Actualiza la visibilidad del indicador de expansión
+     */
+    private void updateExpandCollapseVisibility() {
+        // Solo mostrar el indicador si el menú está expandido y el ítem tiene hijos
+        if (expandCollapseLabel != null) {
+            boolean shouldShow = menuFullyExpanded && menuItem.isHasChildren();
+            
+            // Remover o añadir el componente según corresponda
+            if (shouldShow && !isAncestorOf(expandCollapseLabel)) {
+                add(expandCollapseLabel, BorderLayout.EAST);
+            } else if (!shouldShow && isAncestorOf(expandCollapseLabel)) {
+                remove(expandCollapseLabel);
+            }
+            
+            // Actualizar el icono si es visible
+            if (shouldShow) {
+                updateExpandCollapseIcon();
+            }
+        }
     }
     
     private void setupComponents() {
@@ -50,7 +94,6 @@ public class SideMenuItemPanel extends JPanel {
         iconLabel.setPreferredSize(new Dimension(iconLabelWidth, 32));
         iconLabel.setMinimumSize(new Dimension(iconLabelWidth, 32));
         iconLabel.setMaximumSize(new Dimension(iconLabelWidth, 48));
-        //iconLabel.setBorder(new LineBorder(Color.BLACK));
         
         // Texto (centro)
         textLabel = new JLabel();
@@ -58,11 +101,20 @@ public class SideMenuItemPanel extends JPanel {
         textLabel.setForeground(textColor);
         textLabel.setFont(opcionesFont);
         textLabel.setBorder(new EmptyBorder(3, 0, 0, 0));
-        //textLabel.setBorder(new LineBorder(Color.BLACK));
         textLabel.setVerticalAlignment(SwingConstants.CENTER);
+        
+        // Indicador de expansión (derecha) - lo creamos siempre
+        expandCollapseLabel = new JLabel();
+        expandCollapseLabel.setOpaque(false);
+        expandCollapseLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        expandCollapseLabel.setPreferredSize(new Dimension(24, 24));
+        updateExpandCollapseIcon();
         
         add(iconLabel, BorderLayout.WEST);
         add(textLabel, BorderLayout.CENTER);
+        
+        // Solo añadimos el indicador si el menú está expandido y tiene hijos
+        updateExpandCollapseVisibility();
     }
     
     private void setupEventListeners() {
@@ -86,13 +138,66 @@ public class SideMenuItemPanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (menuItem.isEnabled()) {
-                    // Aquí puedes agregar lógica para manejar clicks
-                    fireMenuItemClicked();
+                    // Si el clic fue en el indicador de expansión o si tiene hijos
+                    if (menuItem.isHasChildren()) {
+                        menuItem.toggleExpanded();
+                        updateExpandCollapseIcon();
+                        if (expandListener != null) {
+                            expandListener.onExpandCollapse(menuItem);
+                        }
+                    } else {
+                        // Acción normal para ítems sin hijos
+                        fireMenuItemClicked();
+                    }
                 }
             }
         };
         
         addMouseListener(mouseHandler);
+    }
+    
+    public void setExpandCollapseListener(ExpandCollapseListener listener) {
+        this.expandListener = listener;
+    }
+    
+    private void updateExpandCollapseIcon() {
+        if (!menuItem.isHasChildren()) {
+            expandCollapseLabel.setIcon(null);
+            return;
+        }
+        
+        // Crear icono de flecha según estado expandido/colapsado
+        ImageIcon icon = menuItem.isExpanded() ? 
+                createArrowIcon(10, 6, true) : 
+                createArrowIcon(6, 10, false);
+        
+        expandCollapseLabel.setIcon(icon);
+    }
+    
+    private ImageIcon createArrowIcon(int width, int height, boolean down) {
+        BufferedImage img = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = img.createGraphics();
+        
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setColor(textColor);
+        
+        int x = (16 - width) / 2;
+        int y = (16 - height) / 2;
+        
+        if (down) {
+            // Flecha hacia abajo (▼)
+            int[] xPoints = {x, x + width/2, x + width};
+            int[] yPoints = {y, y + height, y};
+            g2d.fillPolygon(xPoints, yPoints, 3);
+        } else {
+            // Flecha hacia la derecha (▶)
+            int[] xPoints = {x, x + width, x};
+            int[] yPoints = {y, y + height/2, y + height};
+            g2d.fillPolygon(xPoints, yPoints, 3);
+        }
+        
+        g2d.dispose();
+        return new ImageIcon(img);
     }
     
     private void updateContent() {
@@ -109,9 +214,6 @@ public class SideMenuItemPanel extends JPanel {
                 
                 iconLabel.setIcon(scaledIcon);
                 iconLabel.setText(""); // Limpiar texto si hay icono
-                
-                System.out.println("Icono cargado para: " + menuItem.getText()); // Debug
-                
             } catch (Exception e) {
                 System.err.println("Error procesando icono para " + menuItem.getText() + ": " + e.getMessage());
                 // Si falla, mostrar un icono por defecto o texto
@@ -131,6 +233,9 @@ public class SideMenuItemPanel extends JPanel {
         
         // Actualizar estado enabled/disabled
         updateEnabledState();
+        
+        // Actualizar indicador de expansión
+        updateExpandCollapseIcon();
         
         revalidate();
         repaint();
