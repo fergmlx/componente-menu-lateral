@@ -97,19 +97,19 @@ public class SideMenuComponent extends JPanel implements Serializable {
         contentPanel.setOpaque(false); // Clave para transparencia
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         
-        SideMenuItem item = new SideMenuItem("Inicio", new ImageIcon(getClass().getResource("home.png")));
+        SideMenuItem item = new SideMenuItem("Inicio", "home.png");
         item.setTooltip("Ir a Inicio");
         model.addItem(item);
-        item = new SideMenuItem("Perfil", new ImageIcon(getClass().getResource("perfil.png")));
+        item = new SideMenuItem("Perfil", "perfil.png");
         item.setTooltip("Ver perfil de usuario");
         model.addItem(item);
-        item = new SideMenuItem("Mensajes", new ImageIcon(getClass().getResource("mensaje.png")));
+        item = new SideMenuItem("Mensajes", "mensaje.png");
         item.setTooltip("Ver mensajes");
         model.addItem(item);
-        item = new SideMenuItem("Configuración", new ImageIcon(getClass().getResource("config.png")));
+        item = new SideMenuItem("Configuración", "config.png");
         item.setTooltip("Ir a configuración");
         model.addItem(item);
-        item = new SideMenuItem("Ayuda", new ImageIcon(getClass().getResource("ayuda.png")));
+        item = new SideMenuItem("Ayuda", "ayuda.png");
         item.setTooltip("Ayuda");
         model.addItem(item);
         this.setModel(model);
@@ -370,7 +370,7 @@ public class SideMenuComponent extends JPanel implements Serializable {
             this.model.removeChangeListener(modelChangeListener);
         }
 
-        this.model = model != null ? model : new SideMenuModel();
+        this.model = (model != null) ? model : new SideMenuModel();
 
         // Agregar listener al nuevo modelo
         if (modelChangeListener == null) {
@@ -407,34 +407,12 @@ public class SideMenuComponent extends JPanel implements Serializable {
         model.addItem(new SideMenuItem(text));
     }
 
-    public void addMenuItem(String text, ImageIcon icon) {
-        model.addItem(new SideMenuItem(text, icon));
-    }
-
     public void addMenuItem(String text, String iconPath) {
         try {
-            ImageIcon icon = new ImageIcon(iconPath);
-            model.addItem(new SideMenuItem(text, icon));
+            model.addItem(new SideMenuItem(text, iconPath));
         } catch (Exception e) {
             System.err.println("Error cargando icono desde: " + iconPath);
             // Agregar sin icono si falla
-            model.addItem(new SideMenuItem(text));
-        }
-    }
-
-    public void addMenuItemWithResourceIcon(String text, String resourcePath) {
-        try {
-            // Para cargar iconos desde recursos del classpath
-            java.net.URL iconURL = getClass().getResource(resourcePath);
-            if (iconURL != null) {
-                ImageIcon icon = new ImageIcon(iconURL);
-                model.addItem(new SideMenuItem(text, icon));
-            } else {
-                System.err.println("Recurso no encontrado: " + resourcePath);
-                model.addItem(new SideMenuItem(text));
-            }
-        } catch (Exception e) {
-            System.err.println("Error cargando icono desde recurso: " + resourcePath);
             model.addItem(new SideMenuItem(text));
         }
     }
