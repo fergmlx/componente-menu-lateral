@@ -11,7 +11,7 @@ public class SideMenuComponentBeanInfo extends SimpleBeanInfo {
     @Override
     public PropertyDescriptor[] getPropertyDescriptors() {
         try {
-            PropertyDescriptor[] properties = new PropertyDescriptor[12];
+            PropertyDescriptor[] properties = new PropertyDescriptor[13];
             
             // Propiedad model (NUEVA)
             properties[0] = new PropertyDescriptor("model", SideMenuComponent.class);
@@ -68,12 +68,17 @@ public class SideMenuComponentBeanInfo extends SimpleBeanInfo {
             // Propiedad hoverColor
             properties[10] = new PropertyDescriptor("hoverColor", SideMenuComponent.class);
             properties[10].setDisplayName("Hover Color");
-            properties[10].setShortDescription("Color que toma una opción al pasar el mouse sobre ella");
+            properties[10].setShortDescription("Color que toma el fondo de una opción al pasar el mouse sobre ella");
             
             // Propiedad textColor
             properties[11] = new PropertyDescriptor("textColor", SideMenuComponent.class);
             properties[11].setDisplayName("Text Color");
             properties[11].setShortDescription("Color de texto de las opciones");
+            
+            // Propiedad textHoverColor
+            properties[12] = new PropertyDescriptor("textHoverColor", SideMenuComponent.class);
+            properties[12].setDisplayName("Text Hover Color");
+            properties[12].setShortDescription("Color que toma el texto de una opción al pasar el mouse sobre ella ");
             
             return properties;
             
