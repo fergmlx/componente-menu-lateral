@@ -48,8 +48,8 @@ public class SideMenuItemPanel extends JPanel {
         iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
         iconLabel.setVerticalAlignment(SwingConstants.CENTER);
         iconLabel.setPreferredSize(new Dimension(iconLabelWidth, 32));
-        iconLabel.setMinimumSize(new Dimension(32, 32));
-        iconLabel.setMaximumSize(new Dimension(32, 32));
+        iconLabel.setMinimumSize(new Dimension(iconLabelWidth, 32));
+        iconLabel.setMaximumSize(new Dimension(iconLabelWidth, 48));
         //iconLabel.setBorder(new LineBorder(Color.BLACK));
         
         // Texto (centro)

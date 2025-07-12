@@ -1,7 +1,5 @@
 package menulateral;
 
-import java.awt.Color;
-import java.awt.Font;
 import java.io.File;
 import java.io.Serializable;
 import java.net.MalformedURLException;
@@ -16,7 +14,7 @@ public class SideMenuItem implements Serializable {
     private ImageIcon icon;
     private String tooltip;
     private boolean enabled = true;
-    private Object userData; // Para datos personalizados del usuario
+    private Object userData;
     private URL iconUrl;
     private String iconPath;
     
@@ -40,12 +38,6 @@ public class SideMenuItem implements Serializable {
         this.iconPath = iconPath;
         this.iconUrl = resolveUrl(iconPath);
         this.icon = (iconUrl != null) ? new ImageIcon(iconUrl) : null;
-        this.tooltip = tooltip;
-    }
-    
-    public SideMenuItem(String text, ImageIcon icon, String tooltip) {
-        this.text = text;
-        this.icon = icon;
         this.tooltip = tooltip;
     }
     
