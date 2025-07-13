@@ -265,6 +265,10 @@ private void setupComponents() {
          menuLateral.setExpanded(false); // Contraer
 ```
 
+## 🎥 Video demostración
+
+> 📹 **[Ver video demostrativo en YouTube](https://youtu.be/hWHMxNumKTw?si=MZPEAgN63LoH28Ur)**
+
 ## Créditos
 
 <div align="center">
