@@ -271,6 +271,8 @@ private void setupComponents() {
 
 ## Créditos
 
+## Equipo 3
+
 <div align="center">
   <table>
     <tr>
@@ -278,7 +280,7 @@ private void setupComponents() {
         <a href="https://github.com/fergmlx">
           <img src="https://github.com/fergmlx.png" width="100px;" alt=""/>
           <br />
-          <sub><b>Luis Fernando González Miguel</b></sub>
+          <sub><b>González Miguel Luis Fernando</b></sub>
         </a>
         <br />
         <sub>Miembro del equipo</sub>
@@ -288,7 +290,7 @@ private void setupComponents() {
         <a href="https://github.com/JonathanRene">
           <img src="https://github.com/JonathanRene.png" width="100px;" alt=""/>
           <br />
-          <sub><b>Jonathan Rene Cruz Gutiérrez</b></sub>
+          <sub><b>Cruz Gutiérrez Jonathan Rene</b></sub>
         </a>
         <br />
         <sub>Miembro del equipo</sub>
