@@ -356,9 +356,8 @@ public class SideMenuItemPanel extends JPanel {
         repaint();
     }
     
-    // Método para notificar clicks (puedes expandir esto con listeners)
+    // Método para notificar clicks
     private void fireMenuItemClicked() {
-        // Aquí puedes implementar un sistema de eventos personalizado
-        System.out.println("Menu item clicked: " + menuItem.getText());
+        menuItem.executeAction();
     }
 }

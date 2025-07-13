@@ -1,6 +1,7 @@
 package menulateral;
 
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
@@ -213,6 +214,59 @@ public class SideMenuComponent extends JPanel implements Serializable {
                 addMenuItemToPanel(child, parentPanel);
             }
         }
+    }
+    
+    /**
+    * Busca un ítem por su texto y le asigna una acción.
+    * 
+    * @param text Texto del ítem a buscar
+    * @param listener Acción a ejecutar cuando se haga clic en el ítem
+    * @return true si se encontró y configuró el ítem, false en caso contrario
+    */
+    public boolean setMenuItemAction(String text, ActionListener listener) {
+        SideMenuItem item = findMenuItemByText(text);
+        if (item != null) {
+            item.setActionListener(listener);
+            return true;
+        }
+        return false;
+    }
+
+   /**
+    * Busca un ítem por su texto en todo el modelo (incluyendo ítems anidados).
+    * 
+    * @param text Texto del ítem a buscar
+    * @return El ítem encontrado o null si no existe
+    */
+    public SideMenuItem findMenuItemByText(String text) {
+        if (model == null) return null;
+
+        // Buscar en todos los ítems de nivel superior y sus hijos
+        for (SideMenuItem item : model.getItems()) {
+            SideMenuItem found = findItemByTextRecursive(item, text);
+            if (found != null) return found;
+        }
+        return null;
+    }
+
+   /**
+    * Método recursivo para buscar un ítem por texto.
+    */
+    private SideMenuItem findItemByTextRecursive(SideMenuItem current, String text) {
+        // Verificar si este es el ítem que buscamos
+        if (text.equals(current.getText())) {
+            return current;
+        }
+
+        // Buscar en los hijos si los tiene
+        if (current.isHasChildren()) {
+            for (SideMenuItem child : current.getChildren()) {
+                SideMenuItem found = findItemByTextRecursive(child, text);
+                if (found != null) return found;
+            }
+        }
+
+        return null;
     }
     
     /**

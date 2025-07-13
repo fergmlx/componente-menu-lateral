@@ -1,5 +1,6 @@
 package menulateral;
 
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.Serializable;
 import java.net.MalformedURLException;
@@ -19,6 +20,7 @@ public class SideMenuItem implements Serializable {
     private Object userData;
     private URL iconUrl;
     private String iconPath;
+    private transient ActionListener actionListener;
     
     // Propiedades para submenús
     private boolean hasChildren = false;
@@ -208,5 +210,33 @@ public class SideMenuItem implements Serializable {
     @Override
     public int hashCode() {
         return text != null ? text.hashCode() : 0;
+    }
+    
+    /**
+     * Establece el listener que se ejecutará cuando se haga clic en este ítem.
+     * 
+     * @param actionListener El listener a ejecutar
+     */
+    public void setActionListener(ActionListener actionListener) {
+        this.actionListener = actionListener;
+    }
+    
+    /**
+     * Obtiene el listener asociado a este ítem.
+     * 
+     * @return El listener actual o null si no hay ninguno
+     */
+    public ActionListener getActionListener() {
+        return actionListener;
+    }
+    
+    /**
+     * Ejecuta la acción asociada a este ítem si existe.
+     */
+    public void executeAction() {
+        if (actionListener != null) {
+            actionListener.actionPerformed(new java.awt.event.ActionEvent(
+                this, java.awt.event.ActionEvent.ACTION_PERFORMED, getText()));
+        }
     }
 }
