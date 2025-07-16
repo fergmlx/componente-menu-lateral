@@ -13,28 +13,15 @@ import javax.swing.JOptionPane;
  * @author Fer
  */
 public class Bienvenida extends javax.swing.JFrame {
-    private EnviarCorreo ventanaMensaje;
-    private Perfil dialogoPerfil;
-    private String email;
-    private String password;
 
     /**
      * Creates new form Bienvenida
      */
     public Bienvenida() {
         initComponents();
-        dialogoPerfil = new Perfil(null, true);
-        ventanaMensaje = new EnviarCorreo();
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        sideMenuComponent1.setMenuItemAction("Perfil", e -> {
-            dialogoPerfil.setVisible(true);
-            if (dialogoPerfil.getBotonPulsado() == 0) {
-                ventanaMensaje.setEmail(dialogoPerfil.getEmail());
-                ventanaMensaje.setPassword(dialogoPerfil.getPassword());
-            }
-        });
-        sideMenuComponent1.setMenuItemAction("Enviar", e -> {
-            ventanaMensaje.setVisible(true);
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        sideMenuComponent1.setMenuItemAction("Inicio", e -> {
+            JOptionPane.showMessageDialog(this, "Hola");
         });
     }
 
@@ -58,7 +45,6 @@ public class Bienvenida extends javax.swing.JFrame {
         jPanel3.setBackground(new java.awt.Color(255, 255, 255));
 
         sideMenuComponent1.setCollapsedWidth(100);
-        sideMenuComponent1.setModel(new menulateral.SideMenuModel() {{ addItem(new menulateral.SideMenuItem("Inicio", "/icons/home.png", "Ir a Inicio")); addItem(new menulateral.SideMenuItem("Perfil", "/icons/perfil.png", "Ver perfil de usuario")); addItem(new menulateral.SideMenuItem("Mensajes", "/icons/mensaje.png", "Correos")); menulateral.SideMenuItem item2730 = getItem(2); menulateral.SideMenuItem item8046 = new menulateral.SideMenuItem("Enviar", "C:\\Users\\Fer\\Documents\\NetBeansProjects\\UsoComponente\\src\\usocomponente\\send.png", "Enviar mensaje"); item2730.addChild(item8046); addItem(new menulateral.SideMenuItem("Configuración", "/icons/config.png", "Ir a configuración")); addItem(new menulateral.SideMenuItem("Ayuda", "/icons/ayuda.png", "Ayuda")); }});
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -70,7 +56,7 @@ public class Bienvenida extends javax.swing.JFrame {
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(sideMenuComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 566, Short.MAX_VALUE)
+            .addComponent(sideMenuComponent1, javax.swing.GroupLayout.DEFAULT_SIZE, 496, Short.MAX_VALUE)
         );
 
         getContentPane().add(jPanel3, java.awt.BorderLayout.LINE_START);
@@ -87,20 +73,20 @@ public class Bienvenida extends javax.swing.JFrame {
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGap(198, 198, 198)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 409, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1))
-                .addContainerGap(273, Short.MAX_VALUE))
+                .addGap(149, 149, 149)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(176, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGap(52, 52, 52)
+                .addGap(49, 49, 49)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2)
-                .addContainerGap(85, Short.MAX_VALUE))
+                .addContainerGap(99, Short.MAX_VALUE))
         );
 
         getContentPane().add(jPanel4, java.awt.BorderLayout.CENTER);
