@@ -15,7 +15,6 @@ import javax.swing.table.TableCellRenderer;
 /**
  * Editor personalizado para el modelo de SideMenuComponent
  * Permite editar los ítems del menú desde la ventana de propiedades de NetBeans
- * Con soporte para jerarquías (elementos padre-hijo)
  */
 public class SideMenuModelEditor extends PropertyEditorSupport {
     
@@ -68,11 +67,6 @@ public class SideMenuModelEditor extends PropertyEditorSupport {
     @Override
     public String getAsText() {
         return model.toString();
-    }
-    
-    @Override
-    public void setAsText(String text) throws IllegalArgumentException {
-        // No es necesario implementar esto, usamos editor personalizado
     }
     
     /**
@@ -159,6 +153,15 @@ public class SideMenuModelEditor extends PropertyEditorSupport {
                 sb.append(itemVar).append(".setEnabled(false); ");
             } else {
                 sb.append("getItem(").append(model.indexOf(item)).append(").setEnabled(false); ");
+            }
+        }
+        
+        // Si no se muestra entonces se oculta
+        if (!item.isShown()) {
+            if (itemVar != null) {
+                sb.append(itemVar).append(".setShown(false); ");
+            } else {
+                sb.append("getItem(").append(model.indexOf(item)).append(").setShown(false); ");
             }
         }
         
@@ -551,7 +554,7 @@ public class SideMenuModelEditor extends PropertyEditorSupport {
      * Modelo de tabla para los ítems del menú
      */
     private class MenuItemTableModel extends AbstractTableModel {
-        private final String[] columnNames = {"Texto", "Icono", "Tooltip", "Habilitado", "Expandido"};
+        private final String[] columnNames = {"Texto", "Icono", "Tooltip", "Habilitado", "Mostrado", "Expandido"};
         private List<FlatMenuItem> flatItems;
         
         public MenuItemTableModel() {
@@ -582,7 +585,7 @@ public class SideMenuModelEditor extends PropertyEditorSupport {
         public Class<?> getColumnClass(int columnIndex) {
             switch (columnIndex) {
                 case 1: return ImageIcon.class;
-                case 3: case 4: return Boolean.class;
+                case 3: case 4: case 5: return Boolean.class;
                 default: return String.class;
             }
         }
@@ -590,7 +593,7 @@ public class SideMenuModelEditor extends PropertyEditorSupport {
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             // La columna "Expandido" solo es editable si el ítem tiene hijos
-            if (columnIndex == 4) {
+            if (columnIndex == 5) {
                 return flatItems.get(rowIndex).item.isHasChildren();
             }
             return true;
@@ -608,7 +611,8 @@ public class SideMenuModelEditor extends PropertyEditorSupport {
                 case 1: return item.getIcon();
                 case 2: return item.getTooltip();
                 case 3: return item.isEnabled();
-                case 4: return item.isExpanded();
+                case 4: return item.isShown();
+                case 5: return item.isExpanded();
                 default: return null;
             }
         }
@@ -667,7 +671,10 @@ public class SideMenuModelEditor extends PropertyEditorSupport {
                 case 3: // Habilitado
                     newItem.setEnabled((Boolean) value);
                     break;
-                case 4: // Expandido
+                case 4: // Mostrado
+                    newItem.setShown((Boolean) value);
+                    break;
+                case 5: // Expandido
                     newItem.setExpanded((Boolean) value);
                     break;
             }
