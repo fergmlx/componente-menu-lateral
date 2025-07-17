@@ -174,7 +174,9 @@ public class SideMenuComponent extends JPanel implements Serializable {
             // Usar un método recursivo para mostrar items con jerarquía
             for (SideMenuItem item : model.getItems()) {
                 try {
+                    if (item.isShown()) {
                     addMenuItemToPanel(item, contentPanel);
+                    }
                 } catch (Exception itemEx) {
                     System.err.println("Error procesando ítem: " + itemEx.getMessage());
                 }
@@ -224,7 +226,7 @@ public class SideMenuComponent extends JPanel implements Serializable {
     * @return true si se encontró y configuró el ítem, false en caso contrario
     */
     public boolean setMenuItemAction(String text, ActionListener listener) {
-        SideMenuItem item = findMenuItemByText(text);
+        SideMenuItem item = getMenuItem(text);
         if (item != null) {
             item.setActionListener(listener);
             return true;
@@ -238,7 +240,7 @@ public class SideMenuComponent extends JPanel implements Serializable {
     * @param text Texto del ítem a buscar
     * @return El ítem encontrado o null si no existe
     */
-    public SideMenuItem findMenuItemByText(String text) {
+    public SideMenuItem getMenuItem(String text) {
         if (model == null) return null;
 
         // Buscar en todos los ítems de nivel superior y sus hijos

@@ -17,6 +17,7 @@ public class SideMenuItem implements Serializable {
     private ImageIcon icon;
     private String tooltip;
     private boolean enabled = true;
+    private boolean shown = true;
     private Object userData;
     private URL iconUrl;
     private String iconPath;
@@ -166,6 +167,14 @@ public class SideMenuItem implements Serializable {
     
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isShown() {
+        return shown;
+    }
+
+    public void setShown(boolean shown) {
+        this.shown = shown;
     }
     
     public Object getUserData() {
