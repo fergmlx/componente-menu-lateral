@@ -40,139 +40,39 @@ opciones, así como agregar hijos a cada opción. Además, cuenta con un método
 
 A continuación se muestran algunos de los métodos más relevantes del componente:
 
-### Inicialización del Menú
+### Buscar un ítem por su texto en todo el modelo (incluyendo ítems anidados)
 
 ```java
 /**
- * Inicializa el menú lateral con la configuración por defecto
+ * Busca el item (SideMenuItem) dentro del modelo con texto Inicio, regresa null si no lo encuentra 
  */
-private void initializeComponent() {
-        setLayout(new BorderLayout());
-        setOpaque(false); // Clave para transparencia
-        setPreferredSize(new Dimension(collapsedWidth, 400));
-        setBorder(new EmptyBorder(0, 0, 0, 0));
-        
-        // Panel superior (header) - usa el mismo backgroundColor
-        headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setOpaque(false); // Clave para transparencia
-        headerPanel.setPreferredSize(new Dimension(collapsedWidth, 60));
-        
-        // Logo (inicialmente oculto)
-        logoLabel = new JLabel(logoText, SwingConstants.LEFT);
-        logoLabel.setBorder(new EmptyBorder(15, 10, 10, 10));
-        //logoLabel.setBorder(new LineBorder(Color.BLACK));
-        logoLabel.setForeground(Color.WHITE);
-        logoLabel.setVisible(false);
-        
-        // Inicializar iconos por defecto
-        createDefaultIcons();
-        
-        // Botón toggle
-        toggleButton = new JButton();
-        updateToggleButtonIcon();
-        toggleButton.setBackground(Color.WHITE);
-        toggleButton.setForeground(defaultHamburgerIconColor);
-        toggleButton.setBorder(null);
-        toggleButton.setFocusPainted(false);
-        toggleButton.setContentAreaFilled(false);
-        toggleButton.setPreferredSize(new Dimension(collapsedWidth, getPreferredSize().height));
-        toggleButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        // Panel de contenido - usa el mismo backgroundColor
-        contentPanel = new JPanel();
-        contentPanel.setOpaque(false); // Clave para transparencia
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        
-        SideMenuItem item = new SideMenuItem("Inicio", "/icons/home.png");
-        item.setTooltip("Ir a Inicio");
-        model.addItem(item);
-        item = new SideMenuItem("Perfil", "/icons/perfil.png");
-        item.setTooltip("Ver perfil de usuario");
-        model.addItem(item);
-        item = new SideMenuItem("Mensajes", "/icons/mensaje.png");
-        item.setTooltip("Ver mensajes");
-        model.addItem(item);
-        item = new SideMenuItem("Configuración", "/icons/config.png");
-        item.setTooltip("Ir a configuración");
-        model.addItem(item);
-        item = new SideMenuItem("Ayuda", "/icons/ayuda.png");
-        item.setTooltip("Ayuda");
-        model.addItem(item);
-        this.setModel(model);
-    }
+menuLateral.getMenuItem("Inicio");
 ```
 
-### Constructor de un item
+### Ocultar o deshabilitar una opción
 
 ```java
-public SideMenuItem(String text, String iconPath, String tooltip) {
-    this.text = text;
-    this.iconPath = iconPath;
-    this.iconUrl = resolveUrl(iconPath);
-    this.icon = (iconUrl != null) ? new ImageIcon(iconUrl) : null;
-    this.tooltip = tooltip;
-    this.children = new ArrayList<>();
-}
+itemInicio.setEnabled(false); // Deshabilita el item Inicio
+itemInicio.setShown(false); // Oculta el item Inicio
 ```
+> [!NOTE]
+> Si un item se deshabilita este se torna de color gris.
 
-### Establecimiento de los componentes de cada panel que contiene un item
+### Buscar un ítem por su texto y asignarle una acción.
 
 ```java
-private void setupComponents() {
-    // Icono (lado izquierdo)
-    iconLabel = new JLabel();
-    iconLabel.setOpaque(false);
-    iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    iconLabel.setVerticalAlignment(SwingConstants.CENTER);
-    iconLabel.setPreferredSize(new Dimension(iconLabelWidth, 32));
-    iconLabel.setMinimumSize(new Dimension(iconLabelWidth, 32));
-    iconLabel.setMaximumSize(new Dimension(iconLabelWidth, 48));
-    
-    // Texto (centro)
-    textLabel = new JLabel();
-    textLabel.setOpaque(false);
-    textLabel.setForeground(textColor);
-    textLabel.setFont(opcionesFont);
-    textLabel.setBorder(new EmptyBorder(3, 0, 0, 0));
-    textLabel.setVerticalAlignment(SwingConstants.CENTER);
-    
-    // Indicador de expansión (derecha)
-    expandCollapseLabel = new JLabel();
-    expandCollapseLabel.setOpaque(false);
-    expandCollapseLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    expandCollapseLabel.setPreferredSize(new Dimension(24, 24));
-    updateExpandCollapseIcon();
-    
-    add(iconLabel, BorderLayout.WEST);
-    add(textLabel, BorderLayout.CENTER);
-    
-    // Solo añadimos el indicador si el menú está expandido y tiene hijos
-    updateExpandCollapseVisibility();
-}
+/**
+ * Busca el item del menú lateral con el texto "Mensajes"
+ * si el item y le asigna un ActionListener
+ * para mostrar la ventana 'ventanaMensaje' cuando se hace click en él.
+ */
+menuLateral.setMenuItemAction("Mensajes", e -> {
+    ventanaMensaje.setVisible(true);
+});
 ```
 
-### Método que usa el editor personalizado del modelo para generar el código del nuevo modelo cuando se modifica
-```java
-@Override
-    public String getJavaInitializationString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("new menulateral.SideMenuModel()");
-
-        // Solo genera código para agregar elementos si hay elementos en el modelo
-        if (model != null && model.getItemCount() > 0) {
-            sb.delete(0, sb.length());  // Limpiar el StringBuilder
-            sb.append("new menulateral.SideMenuModel() {{ ");
-
-            for (SideMenuItem item : model.getItems()) {
-                generateItemCode(sb, item, null);
-            }
-
-            sb.append("}}");
-        }
-
-        return sb.toString();
-    }
-```
+> [!NOTE]
+> Los items tienen su método `setActionListener(ActionListener actionListener)`, por lo que si tienes una instancia de `SideMenuItem` puedes directamente invocar dicho método en él.
 
 ## Instrucciones de Uso
 
