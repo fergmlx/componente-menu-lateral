@@ -15,6 +15,8 @@ public class SideMenuItemPanel extends JPanel {
     private SideMenuItem menuItem;
     private JLabel iconLabel;
     private int iconLabelWidth;
+    private int maxHeight;
+    private int preferredHeight;
     private JLabel textLabel;
     private JLabel expandCollapseLabel; // Nuevo: indicador de expansión
     private Font opcionesFont = new Font("Poppins", Font.PLAIN, 14);
@@ -43,10 +45,23 @@ public class SideMenuItemPanel extends JPanel {
         updateContent();
     }
     
+    public SideMenuItemPanel(SideMenuItem item, int iconLabelWidth, int preferredHeight) {
+        this.menuItem = item;
+        this.iconLabelWidth = iconLabelWidth;
+        this.preferredHeight = preferredHeight;
+        initializePanel();
+        setupComponents();
+        setupEventListeners();
+        updateContent();
+    }
+    
     private void initializePanel() {
         setLayout(new BorderLayout());
         setOpaque(false);
-        setPreferredSize(new Dimension(250, 45));
+        if (preferredHeight != 0) {
+            setPreferredSize(new Dimension(Integer.MAX_VALUE, preferredHeight));
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, preferredHeight));
+        }
         // Añadir indentación basada en el nivel del ítem
         int leftPadding = menuItem.getLevel() * 15; // 15px por nivel
         setBorder(new EmptyBorder(5, leftPadding, 5, 10));

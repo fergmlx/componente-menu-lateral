@@ -23,6 +23,7 @@ public class SideMenuComponent extends JPanel implements Serializable {
     private boolean expanded = false;
     private int collapsedWidth = 60;
     private int expandedWidth = 250;
+    private int preferredHeight;
     private Color backgroundColor = Color.WHITE;
     private Color defaultHamburgerIconColor = Color.BLACK;
     private Color hoverColor = Color.CYAN;
@@ -195,7 +196,8 @@ public class SideMenuComponent extends JPanel implements Serializable {
     // Método recursivo para añadir items y sus hijos
     private void addMenuItemToPanel(SideMenuItem item, JPanel parentPanel) {
         // Crear el panel para este ítem
-        SideMenuItemPanel itemPanel = new SideMenuItemPanel(item, collapsedWidth);
+        SideMenuItemPanel itemPanel = 
+                (preferredHeight == 0) ? new SideMenuItemPanel(item, collapsedWidth) : new SideMenuItemPanel(item, collapsedWidth, preferredHeight);
         itemPanel.setOpcionesFont(opcionesFont);
         itemPanel.setHoverColor(hoverColor);
         itemPanel.setTextHoverColor(textHoverColor);
@@ -642,6 +644,19 @@ public class SideMenuComponent extends JPanel implements Serializable {
     
     public void setOpcionesFont(Font opcionesFont) {
         this.opcionesFont = opcionesFont;
+        SwingUtilities.invokeLater(() -> {
+            updateMenuItems();
+            revalidate();
+            repaint();
+        });
+    }
+
+    public int getPreferredHeight() {
+        return preferredHeight;
+    }
+    
+    public void setPreferredHeight(int preferredHeight) {
+        this.preferredHeight = preferredHeight;
         SwingUtilities.invokeLater(() -> {
             updateMenuItems();
             revalidate();
